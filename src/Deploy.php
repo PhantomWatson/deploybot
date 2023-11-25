@@ -22,24 +22,28 @@ class Deploy
     public $screenOutput;
     public $site;
     public $slack;
+    private $validateIpAddresses = false;
 
     /**
      * Deploy constructor
      */
     public function __construct()
     {
-        //$this->validateIpAddress();
-        $this->handleGithubPings();
-
-        $this->repoName = $this->getRepoName();
-        $this->branch = Request::getBranch();
-
-        $this->site = Site::getSite($this->repoName);
-        $this->validateBranch();
-
+        $this->validateIpAddress();
         $this->initializeLogging();
         $this->setEnvVars();
-        $this->runCommands();
+
+        if (Request::isGithubPing()) {
+            $this->handleGithubPing();
+        } else {
+            $this->repoName = $this->getRepoName();
+            $this->branch = Request::getBranch();
+
+            $this->site = Site::getSite($this->repoName);
+            $this->validateBranch();
+            $this->runCommands();
+        }
+
         $this->finishLogging();
     }
 
@@ -50,6 +54,10 @@ class Deploy
      */
     private function validateIpAddress()
     {
+        if (!$this->validateIpAddresses) {
+            return;
+        }
+
         if (Request::isAuthorized()) {
             return;
         }
@@ -72,12 +80,15 @@ class Deploy
      *
      * @return void
      */
-    private function handleGithubPings()
+    private function handleGithubPing()
     {
-        if (Request::isGithubPing()) {
-            echo 'Ping received!';
-            exit;
+        if (!Request::isGithubPing()) {
+            return;
         }
+        $msg = 'GitHub ping received for ' . $this->getRepoName();
+        echo $msg;
+        $this->log->addLine($msg);
+        $this->slack->addLine($msg);
     }
 
     /**
