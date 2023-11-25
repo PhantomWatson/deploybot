@@ -10,7 +10,7 @@
         $secret = include dirname(dirname(__FILE__)) . '/config/github_secret.php';
         return hash_equals(
             'sha256=' . hash_hmac('sha256', $body, $secret),
-            $headers['x-hub-signature-256']
+            $headers['X-Hub-Signature-256'] ?? ''
         );
     }
 
