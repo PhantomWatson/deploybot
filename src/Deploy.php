@@ -36,6 +36,7 @@ class Deploy
         if (Request::isGithubPing()) {
             $this->handleGithubPing();
         } else {
+            $this->logTrigger();
             $this->repoName = $this->getRepoName();
             $this->branch = Request::getBranch();
 
@@ -184,15 +185,16 @@ class Deploy
      */
     private function initializeLogging()
     {
-        $triggerMsg = Request::getDeployTrigger();
-
         $this->log = new Log();
+        $this->screenOutput = new ScreenOutput();
+        $this->slack = new Slack();
+    }
+
+    private function logTrigger()
+    {
+        $triggerMsg = Request::getDeployTrigger();
         $this->log->addLine($triggerMsg);
         $this->log->addLine('');
-
-        $this->screenOutput = new ScreenOutput();
-
-        $this->slack = new Slack();
         $this->slack->addTriggerMsg($triggerMsg);
     }
 
