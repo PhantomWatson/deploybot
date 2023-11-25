@@ -47,7 +47,7 @@ class Slack
             'channel' => '#server',
             'text' => $this->content,
             'icon_emoji' => ':robot_face:',
-            'username' => 'CBER Deploy-bot'
+            'username' => 'Phantom Deploy-bot'
         ]);
         $url = include dirname(dirname(__FILE__)) . '/config/slack_webhook_url.php';
         $ch = curl_init($url);

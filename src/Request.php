@@ -169,7 +169,7 @@ class Request
         $githubMetaUrl = 'https://api.github.com/meta';
         $ch = curl_init($githubMetaUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch,CURLOPT_USERAGENT,'CBER Deploy-bot');
+        curl_setopt($ch,CURLOPT_USERAGENT,'Phantom Deploy-bot');
         $curlResult = curl_exec($ch);
         curl_close($ch);
         $ipAddresses = json_decode($curlResult);
