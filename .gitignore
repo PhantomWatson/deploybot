@@ -1,0 +1,8 @@
+.idea/*
+logs/*
+config/slack_webhook_url.php
+config/allowed_ip_addresses.php
+config/github_secret.php
+vendor/*
+/node_modules/*
+composer.phar
