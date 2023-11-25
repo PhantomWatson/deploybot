@@ -23,9 +23,9 @@ $cake4CacheClear = 'php bin/cake.php schema_cache build --connection default';
 $migrate = 'php bin/cake.php migrations migrate';
 
 return [
-    'deploy' => [
+    'deploybot' => [
         'master' => [
-            'dir' => 'deploy',
+            'dir' => 'deploybot',
             'php' => 8,
         ]
     ],
