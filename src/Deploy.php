@@ -269,7 +269,7 @@ class Deploy
     /**
      * Temporarily changes the path to PHP for this command, if required
      *
-     * @param string $command Command
+     * @param string $command
      * @param int $phpVersion PHP major version
      * @return string
      */
