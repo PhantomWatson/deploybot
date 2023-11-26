@@ -89,7 +89,7 @@ class Slack
         }
 
         if (strpos($command, 'composer.phar install') !== false) {
-            $this->addLine("*Composer install:*\n```$results```");
+            $this->addLine("*Composer install:*\n```\n$results\n```");
             return;
         }
 
@@ -108,7 +108,7 @@ class Slack
         }
         */
 
-        $this->addLine("*$command*\n```$results```");
+        $this->addLine("*$command*\n```\n$results\n```");
     }
 
     /**
