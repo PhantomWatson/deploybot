@@ -83,6 +83,15 @@ class Slack
             return;
         }
 
+        if (strpos($command, 'composer.phar self-update') !== false) {
+            $this->addLine('*Composer self-update:* ' . $results);
+        }
+
+        if (strpos($command, 'composer.phar install') !== false) {
+            $this->addLine("*Composer install:*\n```$results```");
+        }
+
+        /*
         if (strpos($command, 'composer.phar install') !== false) {
             $keyStrings = [
                 'Nothing to install or update',
@@ -92,7 +101,12 @@ class Slack
             foreach ($keyStrings as $keyString) {
                 $this->addLinesWithString($results, $keyString, '*Composer:* ');
             }
+
+            return;
         }
+        */
+
+        $this->addLine("*$command*\n```$results```");
     }
 
     /**
