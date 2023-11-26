@@ -38,6 +38,6 @@ return [
             'dir' => 'vore_staging',
             'php' => 8,
         ],
-        'commands' => [$cake4CacheClear, $migrate],
+        'commands' => [$migrate, $cake4CacheClear],
     ],
 ];
