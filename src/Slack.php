@@ -44,7 +44,7 @@ class Slack
     {
         $this->encodeContent();
         $data = 'payload=' . json_encode([
-            'channel' => '#server',
+            'channel' => '#deploy',
             'text' => $this->content,
             'icon_emoji' => ':robot_face:',
             'username' => 'Phantom Deploy-bot'
@@ -56,6 +56,8 @@ class Slack
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $this->curlResult = curl_exec($ch);
         curl_close($ch);
+
+        echo "\n" . $this->curlResult . "\n";
 
         return $this->curlResult == 'ok';
     }
