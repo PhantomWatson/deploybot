@@ -28,4 +28,4 @@
 
     // Deploy
     $deploy = new App\Deploy();
-    echo $deploy->triggerMsg . "\n" . $deploy->screenOutput->content;
+    echo $deploy->screenOutput->content;
