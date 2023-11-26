@@ -173,7 +173,7 @@ class Deploy
             $this->screenOutput->add($command . "\n", '#729FCF');
             $this->screenOutput->add(htmlentities(trim($results)) . "\n\n");
 
-            $this->slack->addAbridged($command, $results);
+            $this->slack->addLine("*$command*\n```$results```");
         }
         //$logUrl = 'http://deploy.phantomwatson.com/log.php?site=' . $this->repoName . '#' . $this->log->entryId;
         //$this->slack->addLine('*Log:* ' . $logUrl);
