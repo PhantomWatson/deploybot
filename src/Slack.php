@@ -57,8 +57,6 @@ class Slack
         $this->curlResult = curl_exec($ch);
         curl_close($ch);
 
-        echo "\n" . $this->curlResult . "\n";
-
         return $this->curlResult == 'ok';
     }
 
