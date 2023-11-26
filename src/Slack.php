@@ -85,10 +85,12 @@ class Slack
 
         if (strpos($command, 'composer.phar self-update') !== false) {
             $this->addLine('*Composer self-update:* ' . $results);
+            return;
         }
 
         if (strpos($command, 'composer.phar install') !== false) {
             $this->addLine("*Composer install:*\n```$results```");
+            return;
         }
 
         /*
