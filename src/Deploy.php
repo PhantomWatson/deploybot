@@ -23,6 +23,7 @@ class Deploy
     public $site;
     public $slack;
     private $validateIpAddresses = false;
+    private $writeToLog = false;
 
     /**
      * Deploy constructor
@@ -232,8 +233,10 @@ class Deploy
      */
     private function finishLogging()
     {
-        $this->log->addLine('');
-        $this->log->write();
+        if ($this->writeToLog) {
+            $this->log->addLine('');
+            $this->log->write();
+        }
 
         $this->addSiteLinkToSlack();
         $this->sendSlackOutput();
