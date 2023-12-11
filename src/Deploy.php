@@ -23,7 +23,6 @@ class Deploy
     public $site;
     public $slack;
     private $validateIpAddresses = false;
-    private $writeToLog = false;
 
     /**
      * Deploy constructor
@@ -46,7 +45,8 @@ class Deploy
             $this->runCommands();
         }
 
-        $this->finishLogging();
+        $this->addSiteLinkToSlack();
+        $this->sendSlackOutput();
     }
 
     /**
@@ -148,7 +148,7 @@ class Deploy
     }
 
     /**
-     * Runs all of the commands for deploying an update
+     * Runs all of the commands for deploying an update and outputs the results to the screen and Slack
      *
      * @return void
      */
@@ -165,18 +165,13 @@ class Deploy
             $command = $this->adaptCommandToPhpVersion($command, $phpVersion);
             $results = shell_exec("$command 2>&1");
 
-            $this->log->addLine("<strong>\$ $command</strong>");
-            $this->log->addLine(trim($results));
-            $this->log->addLine('');
-
             $this->screenOutput->add('$ ', '#6BE234');
             $this->screenOutput->add($command . "\n", '#729FCF');
             $this->screenOutput->add(htmlentities(trim($results)) . "\n\n");
 
             $this->slack->addAbridged($command, $results);
+            $this->sendSlackOutput();
         }
-        //$logUrl = 'http://deploy.phantomwatson.com/log.php?site=' . $this->repoName . '#' . $this->log->entryId;
-        //$this->slack->addLine('*Log:* ' . $logUrl);
     }
 
     /**
@@ -224,22 +219,6 @@ class Deploy
         if (isset($this->site[$this->branch]['url'])) {
             $this->slack->addLine('*Load updated site:* ' . $this->site[$this->branch]['url']);
         }
-    }
-
-    /**
-     * Writes to the log and sends slack message
-     *
-     * @return void
-     */
-    private function finishLogging()
-    {
-        if ($this->writeToLog) {
-            $this->log->addLine('');
-            $this->log->write();
-        }
-
-        $this->addSiteLinkToSlack();
-        $this->sendSlackOutput();
     }
 
     /**

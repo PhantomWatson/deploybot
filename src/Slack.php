@@ -61,11 +61,14 @@ class Slack
         $this->curlResult = curl_exec($ch);
         curl_close($ch);
 
+        // Reset content
+        $this->content = '';
+
         return $this->curlResult == 'ok';
     }
 
     /**
-     * Adds the results of a command to the current message in an abbreviated way
+     * Outputs the results of a command to the current message in an abbreviated way
      *
      * @param string $command Command being run
      * @param string $results Results of command
@@ -93,7 +96,7 @@ class Slack
         }
 
         if (strpos($command, 'composer.phar install') !== false) {
-            $this->addCommandOutput('Composer install', $results);
+            $this->addLine("*Composer install:*\n```\n$results\n```");
             return;
         }
 
@@ -112,8 +115,7 @@ class Slack
         }
         */
 
-        $this->addCommandOutput($command, $results);
-
+        $this->addLine("*$command:*\n```\n$results\n```");
     }
 
     /**
@@ -125,11 +127,7 @@ class Slack
      */
     private function addCommandOutput($command, $results)
     {
-        $chunks = str_split($results, self::MAX_LENGTH);
-        $this->addLine("*$command:*\n```\n{$chunks[0]}\n```");
-        for ($n = 1; $n < count($chunks); $n++) {
-            $this->addLine("\n```\n{$chunks[$n]}\n```");
-        }
+
     }
 
     /**
