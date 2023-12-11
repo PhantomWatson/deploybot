@@ -3,6 +3,10 @@ namespace App;
 
 class Slack
 {
+    /**
+     * @var int Rough max length for a message
+     */
+    const MAX_LENGTH = 39000;
     public $content;
     public $curlResult;
 
@@ -84,12 +88,12 @@ class Slack
         }
 
         if (strpos($command, 'composer.phar self-update') !== false) {
-            $this->addLine('*Composer self-update:* ' . $results);
+            $this->addLine("*Composer self-update:*\n```\n$results\n```");
             return;
         }
 
         if (strpos($command, 'composer.phar install') !== false) {
-            $this->addLine("*Composer install:*\n```\n$results\n```");
+            $this->addCommandOutput('Composer install', $results);
             return;
         }
 
@@ -108,7 +112,24 @@ class Slack
         }
         */
 
-        $this->addLine("*$command*\n```\n$results\n```");
+        $this->addCommandOutput($command, $results);
+
+    }
+
+    /**
+     * Outputs chunks of command output that don't exceed the max message length
+     *
+     * @param string $command
+     * @param string $results
+     * @return void
+     */
+    private function addCommandOutput($command, $results)
+    {
+        $chunks = str_split($results, self::MAX_LENGTH);
+        $this->addLine("*$command:*\n```\n{$chunks[0]}\n```");
+        for ($n = 1; $n < count($chunks); $n++) {
+            $this->addLine("\n```\n{$chunks[$n]}\n```");
+        }
     }
 
     /**
