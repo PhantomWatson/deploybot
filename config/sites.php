@@ -38,6 +38,11 @@ return [
             'dir' => 'vore_staging',
             'php' => 8,
         ],
-        'commands' => [$migrate, $cake4CacheClear],
+        'commands' => [
+            $migrate,
+            $cake4CacheClear,
+            'npm run prod --prefix ./webroot/review',
+            'npm run prod --prefix ./webroot/vote-app',
+        ],
     ],
 ];
