@@ -42,7 +42,9 @@ return [
         'commands' => [
             $migrate,
             $cake4CacheClear,
+            "$npm install --prefix ./webroot/review",
             "$npm run prod --prefix ./webroot/review",
+            "$npm install --prefix ./webroot/review",
             "$npm run prod --prefix ./webroot/vote-app",
         ],
     ],
