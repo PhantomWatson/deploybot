@@ -21,6 +21,7 @@
 $cake3CacheClear = 'php bin/cake.php orm_cache clear';
 $cake4CacheClear = 'php bin/cake.php schema_cache build --connection default';
 $migrate = 'php bin/cake.php migrations migrate';
+$npm = '/opt/cpanel/ea-nodejs16/bin/npm';
 
 return [
     'deploybot' => [
@@ -41,8 +42,8 @@ return [
         'commands' => [
             $migrate,
             $cake4CacheClear,
-            'npm run prod --prefix ./webroot/review',
-            'npm run prod --prefix ./webroot/vote-app',
+            "$npm run prod --prefix ./webroot/review",
+            "$npm run prod --prefix ./webroot/vote-app",
         ],
     ],
 ];
