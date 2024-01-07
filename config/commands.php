@@ -3,7 +3,8 @@
  * A list of all commands to run via shell_exec() for each deployment
  */
 
-$composer = 'php /home/phanto41/public_html/deploybot/composer.phar';
+$php = '/usr/local/bin/php';
+$composer = "$php /home/phanto41/public_html/deploybot/composer.phar";
 
 return [
     'git pull',

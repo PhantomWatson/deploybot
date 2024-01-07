@@ -18,9 +18,10 @@
  * ]
  */
 
-$cake3CacheClear = 'php bin/cake.php orm_cache clear';
-$cake4CacheClear = 'php bin/cake.php schema_cache build --connection default';
-$migrate = 'php bin/cake.php migrations migrate';
+$php = '/usr/local/bin/php';
+$cake3CacheClear = "$php bin/cake.php orm_cache clear";
+$cake4CacheClear = "$php bin/cake.php schema_cache build --connection default";
+$migrate = "$php bin/cake.php migrations migrate";
 $npm = '/opt/cpanel/ea-nodejs16/bin/npm';
 
 return [
