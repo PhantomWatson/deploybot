@@ -164,6 +164,9 @@ class Deploy
         foreach ($commands as $command) {
             $command = $this->adaptCommandToPhpVersion($command, $phpVersion);
             $results = shell_exec("$command 2>&1");
+            if (!$results) {
+                $results = '(no output)';
+            }
 
             $this->screenOutput->add('$ ', '#6BE234');
             $this->screenOutput->add($command . "\n", '#729FCF');
