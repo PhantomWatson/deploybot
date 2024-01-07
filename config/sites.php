@@ -44,9 +44,9 @@ return [
             $migrate,
             $cake4CacheClear,
             "$npm install --prefix ./webroot/review",
-            "$npm run prod --prefix ./webroot/review",
+            "$npm run webpack -- --env mode=production --prefix ./webroot/review",
             "$npm install --prefix ./webroot/review",
-            "$npm run prod --prefix ./webroot/vote-app",
+            "$npm run webpack -- --env mode=production --prefix ./webroot/vote-app",
         ],
     ],
 ];
