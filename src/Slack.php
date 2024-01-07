@@ -90,6 +90,7 @@ class Slack
             return;
         }
 
+        /* Special, cleaner versions of command output. Look nicer, but worse for debugging
         if (strpos($command, 'composer.phar self-update') !== false) {
             $this->addLine("*Composer self-update:*\n```\n$results\n```");
             return;
@@ -99,6 +100,7 @@ class Slack
             $this->addLine("*Composer install:*\n```\n$results\n```");
             return;
         }
+        */
 
         /*
         if (strpos($command, 'composer.phar install') !== false) {
