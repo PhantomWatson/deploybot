@@ -23,6 +23,7 @@ $cake3CacheClear = "$php bin/cake.php orm_cache clear";
 $cake4CacheClear = "$php bin/cake.php schema_cache build --connection default";
 $migrate = "$php bin/cake.php migrations migrate";
 $npm = '/opt/cpanel/ea-nodejs16/bin/npm';
+$updateReactApp = "$npm install && $npm run webpack -- --env mode=production";
 
 return [
     'deploybot' => [
@@ -43,10 +44,8 @@ return [
         'commands' => [
             $migrate,
             $cake4CacheClear,
-            "$npm install --prefix ./webroot/review",
-            "$npm run webpack -- --env mode=production --prefix ./webroot/review",
-            "$npm install --prefix ./webroot/review",
-            "$npm run webpack -- --env mode=production --prefix ./webroot/vote-app",
+            "cd ./webroot/review && $updateReactApp; cd ../..",
+            "cd ./webroot/vote-app && $updateReactApp; cd ../..",
         ],
     ],
 ];
