@@ -44,6 +44,7 @@ return [
         'commands' => [
             $migrate,
             $cake4CacheClear,
+            "cd ./config/webpack && $npm install; cd ../..",
             "cd ./webroot/review && $updateReactApp; cd ../..",
             "cd ./webroot/vote-app && $updateReactApp; cd ../..",
             "cd ./webroot/image-uploader && $updateReactApp; cd ../..",
