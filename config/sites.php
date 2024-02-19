@@ -46,6 +46,7 @@ return [
             $cake4CacheClear,
             "cd ./webroot/review && $updateReactApp; cd ../..",
             "cd ./webroot/vote-app && $updateReactApp; cd ../..",
+            "cd ./webroot/image-uploader && $updateReactApp; cd ../..",
         ],
     ],
 ];
