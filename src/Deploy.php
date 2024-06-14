@@ -157,10 +157,11 @@ class Deploy
         $phpVersion = $this->getPhpVersion();
         $appDir = dirname(dirname(__FILE__));
         $this->openSiteDir();
-        $commands = include $appDir . '/config/commands.php';
-        if (isset($this->site['commands'])) {
-            $commands = array_merge($commands, $this->site['commands']);
-        }
+        $commands = array_merge(
+            include $appDir . '/config/commands.php',   // universal commands
+            $this->site[$this->branch]['commands'] ?? [],       // branch-specific commands
+            $this->site['commands'] ?? [],                      // site-specific commands
+        );
         foreach ($commands as $command) {
             $command = $this->adaptCommandToPhpVersion($command, $phpVersion);
             $results = shell_exec("$command 2>&1");
