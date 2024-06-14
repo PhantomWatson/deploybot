@@ -50,4 +50,30 @@ return [
             "cd ./webroot/image-uploader && $updateReactApp; cd ../..",
         ],
     ],
+    'muncie-events-api' => [
+        'cakephp4' => [
+            'dir' => 'muncie_events4',
+            'php' => 8,
+            'commands' => [
+                $migrate,
+                $cake4CacheClear,
+            ],
+        ],
+        'master' => [
+            'dir' => 'muncie_events',
+            'php' => 7,
+            'commands' => [
+                $migrate,
+                $cake3CacheClear,
+            ],
+        ],
+        'development' => [
+            'dir' => 'muncie_events3_staging',
+            'php' => 7,
+            'commands' => [
+                $migrate,
+                $cake3CacheClear,
+            ],
+        ],
+    ],
 ];
