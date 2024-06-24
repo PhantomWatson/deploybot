@@ -51,7 +51,7 @@ return [
         ],
     ],
     'muncie-events-api' => [
-        'cakephp4' => [
+        'master' => [
             'dir' => 'muncie_events4',
             'php' => 8,
             'commands' => [
@@ -59,20 +59,12 @@ return [
                 $cake4CacheClear,
             ],
         ],
-        'master' => [
-            'dir' => 'muncie_events',
-            'php' => 7,
-            'commands' => [
-                $migrate,
-                $cake3CacheClear,
-            ],
-        ],
         'development' => [
-            'dir' => 'muncie_events3_staging',
-            'php' => 7,
+            'dir' => 'muncie_events4_staging',
+            'php' => 8,
             'commands' => [
                 $migrate,
-                $cake3CacheClear,
+                $cake4CacheClear,
             ],
         ],
     ],
