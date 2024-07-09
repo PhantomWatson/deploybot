@@ -68,4 +68,14 @@ return [
             ],
         ],
     ],
+    'sumner-phone' => [
+        'master' => [
+            'dir' => 'sumner-phone',
+            'php' => 8,
+            'commands' => [
+                $migrate,
+                $cake4CacheClear,
+            ],
+        ],
+    ],
 ];
