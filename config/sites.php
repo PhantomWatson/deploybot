@@ -22,7 +22,7 @@ $php = '/usr/local/bin/php';
 $cake3CacheClear = "$php bin/cake.php orm_cache clear";
 $cake4CacheClear = "$php bin/cake.php schema_cache build --connection default";
 $migrate = "$php bin/cake.php migrations migrate";
-$npm = '/opt/cpanel/ea-nodejs16/bin/npm';
+$npm = '/opt/cpanel/ea-nodejs22/bin/npm';
 $updateReactApp = "$npm install && $npm run webpack -- --env mode=production";
 
 return [
