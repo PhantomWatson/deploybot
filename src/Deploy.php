@@ -205,7 +205,9 @@ class Deploy
      */
     private function sendSlackOutput()
     {
-        if ($this->slack->send()) {
+        if (!$this->slack->content) {
+            $this->screenOutput->add('No message to send to Slack' . PHP_EOL);
+        } elseif ($this->slack->send()) {
             $this->screenOutput->add('Sent message to Slack' . PHP_EOL);
         } else {
             $this->screenOutput->add('Error sending message to Slack: ');
