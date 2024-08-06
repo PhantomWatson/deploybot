@@ -206,10 +206,10 @@ class Deploy
     private function sendSlackOutput()
     {
         if ($this->slack->send()) {
-            $this->screenOutput->add('Sent message to Slack');
+            $this->screenOutput->add('Sent message to Slack' . PHP_EOL);
         } else {
             $this->screenOutput->add('Error sending message to Slack: ');
-            $this->screenOutput->add($this->slack->curlResult, 'red');
+            $this->screenOutput->add($this->slack->curlResult  . PHP_EOL, 'red');
         }
     }
 
