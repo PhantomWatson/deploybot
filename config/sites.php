@@ -75,7 +75,7 @@ return [
             'commands' => [
                 $migrate,
                 $cake4CacheClear,
-                "cd ./webroot/review && $npm install && $npm run build; cd ../..",
+                "cd ./webroot/menu-builder && $npm install && $npm run build; cd ../..",
             ],
         ],
     ],
