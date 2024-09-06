@@ -19,18 +19,30 @@
  */
 
 $php = '/usr/local/bin/php';
+$composer = "/home/phanto41/public_html/deploybot/composer.phar";
+$setupComposer = 'export COMPOSER_HOME="~/.config/composer/"';
+
+$php81 = '/usr/local/bin/ea-php81';
+$runComposerPhp81 = "$php81 $composer self-update; $php81 $composer install --no-dev";
+
 $cake3CacheClear = "$php bin/cake.php orm_cache clear";
 $cake4CacheClear = "$php bin/cake.php schema_cache build --connection default";
 $migrate = "$php bin/cake.php migrations migrate";
 $npm = '/opt/cpanel/ea-nodejs22/bin/npm';
 $updateReactApp = "$npm install && $npm run webpack -- --env mode=production";
+$pull = 'git pull; git status';
 
 return [
     'deploybot' => [
         'master' => [
             'dir' => 'deploybot',
             'php' => 8,
-        ]
+        ],
+        'commands' => [
+            $pull,
+            $setupComposer,
+            $runComposerPhp81,
+        ],
     ],
     'vore-arts-fund' => [
         'master' => [
@@ -42,6 +54,9 @@ return [
             'php' => 8,
         ],
         'commands' => [
+            $pull,
+            $setupComposer,
+            $runComposerPhp81,
             $migrate,
             $cake4CacheClear,
             "cd ./config/webpack && $npm install; cd ../..",
@@ -54,29 +69,32 @@ return [
         'master' => [
             'dir' => 'muncie_events4',
             'php' => 8,
-            'commands' => [
-                $migrate,
-                $cake4CacheClear,
-            ],
+
         ],
         'development' => [
             'dir' => 'muncie_events4_staging',
             'php' => 8,
-            'commands' => [
-                $migrate,
-                $cake4CacheClear,
-            ],
+        ],
+        'commands' => [
+            $pull,
+            $setupComposer,
+            $runComposerPhp81,
+            $migrate,
+            $cake4CacheClear,
         ],
     ],
     'sumner-phone' => [
         'master' => [
             'dir' => 'sumner-phone',
             'php' => 8,
-            'commands' => [
-                $migrate,
-                $cake4CacheClear,
-                "cd ./webroot/menu-builder && $npm install && $npm run build; cd ../..",
-            ],
+        ],
+        'commands' => [
+            $pull,
+            $setupComposer,
+            $runComposerPhp81,
+            $migrate,
+            $cake4CacheClear,
+            "cd ./webroot/menu-builder && $npm install && $npm run build; cd ../..",
         ],
     ],
 ];
