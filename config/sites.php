@@ -25,6 +25,9 @@ $setupComposer = 'export COMPOSER_HOME="~/.config/composer/"';
 $php81 = '/usr/local/bin/ea-php81';
 $runComposerPhp81 = "$php81 $composer self-update; $php81 $composer install --no-dev";
 
+$php82 = '/usr/local/bin/ea-php82';
+$runComposerPhp82 = "$php82 $composer self-update; $php82 $composer install --no-dev";
+
 $cake3CacheClear = "$php bin/cake.php orm_cache clear";
 $cake4CacheClear = "$php bin/cake.php schema_cache build --connection default";
 $migrate = "$php bin/cake.php migrations migrate";
@@ -86,12 +89,12 @@ return [
     'sumner-phone' => [
         'master' => [
             'dir' => 'sumner-phone',
-            'php' => 8,
+            'php' => 8, // 8.2
         ],
         'commands' => [
             $pull,
             $setupComposer,
-            $runComposerPhp81,
+            $runComposerPhp82,
             $migrate,
             $cake4CacheClear,
             "cd ./webroot/menu-builder && $npm install && $npm run build; cd ../..",
