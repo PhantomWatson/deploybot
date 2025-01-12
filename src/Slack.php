@@ -10,6 +10,8 @@ class Slack
     public $content;
     public $curlResult;
 
+    public string $repoName;
+
     /**
      * Adds $line and a newline to the message being built
      *
@@ -53,7 +55,8 @@ class Slack
             'icon_emoji' => ':robot_face:',
             'username' => 'Phantom Deploy-bot'
         ]);
-        $url = include dirname(dirname(__FILE__)) . '/config/slack_webhook_url.php';
+        $urls = include dirname(dirname(__FILE__)) . '/config/slack_webhook_urls.php';
+        $url = $urls[$this->repoName ?? 'default'] ?? $urls['default'];
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);

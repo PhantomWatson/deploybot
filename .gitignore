@@ -1,6 +1,6 @@
 .idea/*
 logs/*
-config/slack_webhook_url.php
+config/slack_webhook_urls.php
 config/allowed_ip_addresses.php
 config/github_secret.php
 vendor/*

@@ -38,6 +38,7 @@ class Deploy
         } else {
             $this->logTrigger();
             $this->repoName = $this->getRepoName();
+            $this->slack->repoName = $this->repoName;
             $this->branch = Request::getBranch();
 
             $this->site = Site::getSite($this->repoName);
