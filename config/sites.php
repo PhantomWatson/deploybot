@@ -66,6 +66,7 @@ return [
             "cd ./webroot/vote-app && $updateReactApp; cd ../..",
             "cd ./webroot/image-uploader && $updateReactApp; cd ../..",
             "cd ./webroot/rich-text-editor && npm install && npm run build; cd ../..",
+            "cd ./webroot/transaction-form && npm install && npm run build; cd ../..",
         ],
     ],
     'muncie-events-api' => [
