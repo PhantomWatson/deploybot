@@ -18,7 +18,7 @@
  * ]
  */
 
-$php = '/usr/local/bin/php';
+$php = '/usr/local/bin/php'; // PHP 8.5
 $composer = "/home/phanto41/public_html/deploybot/composer.phar";
 $setupComposer = 'export COMPOSER_HOME="~/.config/composer/"';
 
@@ -27,6 +27,8 @@ $runComposerPhp81 = "$php81 $composer self-update; $php81 $composer install --no
 
 $php82 = '/usr/local/bin/ea-php82';
 $runComposerPhp82 = "$php82 $composer self-update; $php82 $composer install --no-dev";
+
+$runComposerPhp85 = "$php $composer self-update; $php $composer install --no-dev";
 
 $cake3CacheClear = "$php bin/cake.php orm_cache clear";
 $cake4CacheClear = "$php bin/cake.php schema_cache build --connection default";
@@ -59,7 +61,7 @@ return [
         'commands' => [
             $pull,
             $setupComposer,
-            $runComposerPhp81,
+            $runComposerPhp85,
             $migrate,
             $cake4CacheClear,
             "cd ./config/webpack && $npm install; cd ../..",
