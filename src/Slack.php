@@ -62,7 +62,6 @@ class Slack
         curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $this->curlResult = curl_exec($ch);
-        curl_close($ch);
 
         // Reset content
         $this->content = '';

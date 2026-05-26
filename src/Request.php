@@ -171,7 +171,6 @@ class Request
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch,CURLOPT_USERAGENT,'Phantom Deploy-bot');
         $curlResult = curl_exec($ch);
-        curl_close($ch);
         $ipAddresses = json_decode($curlResult);
         if (!isset($ipAddresses->hooks)) {
             throw new Exception('Unable to retrieve GitHub webhook IP address ranges');
