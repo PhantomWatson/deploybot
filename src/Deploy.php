@@ -163,7 +163,7 @@ class Deploy
         );
         foreach ($commands as $command) {
             $command = $this->adaptCommandToPhpVersion($command, $phpVersion);
-            $results = shell_exec("$command 2>&1");
+            $results = $this->runCommand($command);
             if (!$results) {
                 $results = '(no output)';
             }
@@ -224,6 +224,29 @@ class Deploy
         if (isset($this->site[$this->branch]['url'])) {
             $this->slack->addLine('*Load updated site:* ' . $this->site[$this->branch]['url']);
         }
+    }
+
+    private function runCommand(string $command): string
+    {
+        $process = proc_open(
+            $command,
+            [
+                1 => ['pipe', 'w'], // stdout
+                2 => ['pipe', 'w'], // stderr
+            ],
+            $pipes,
+        );
+        if (!is_resource($process)) {
+            return 'Failed to start process';
+        }
+
+        // Concatenate stdout and stderr
+        $output = stream_get_contents($pipes[1]) . stream_get_contents($pipes[2]);
+
+        fclose($pipes[1]);
+        fclose($pipes[2]);
+        proc_close($process);
+        return $output;
     }
 
     /**

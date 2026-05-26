@@ -39,7 +39,15 @@ class Git
         chdir($siteDir);
 
         // Check to see if status mentions modified files
-        $results = shell_exec('git status');
+        $process = proc_open(
+            'git status',
+            [
+                1 => ['pipe', 'w'], // stdout
+                2 => ['pipe', 'w'], // stderr
+            ],
+            $pipes
+        );
+        $results = is_resource($process) ? stream_get_contents($pipes[1]) : '';
 
         return !stripos($results, 'modified: ');
     }
