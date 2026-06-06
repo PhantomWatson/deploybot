@@ -46,7 +46,7 @@ return [
         'commands' => [
             $pull,
             $setupComposer,
-            $runComposerPhp81,
+            $runComposerPhp85,
         ],
     ],
     'vore-arts-fund' => [
@@ -67,16 +67,15 @@ return [
             "cd ./config/webpack && $npm install; cd ../..",
             "cd ./webroot/vote-app && $updateReactApp; cd ../..",
             "cd ./webroot/image-uploader && $updateReactApp; cd ../..",
-            "cd ./webroot/rich-text-editor && npm install && npm run build; cd ../..",
-            "cd ./webroot/transaction-form && npm install && npm run build; cd ../..",
-            "cd ./webroot/repayment-form && npm install && npm run build; cd ../..",
+            "cd ./webroot/rich-text-editor && $npm install && $npm run build; cd ../..",
+            "cd ./webroot/transaction-form && $npm install && $npm run build; cd ../..",
+            "cd ./webroot/repayment-form && $npm install && $npm run build; cd ../..",
         ],
     ],
     'muncie-events-api' => [
         'master' => [
             'dir' => 'muncie_events4',
             'php' => 8,
-
         ],
         'development' => [
             'dir' => 'muncie_events4_staging',
