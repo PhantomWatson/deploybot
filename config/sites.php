@@ -6,7 +6,7 @@
  * [
  *      'repo-name' => [
  *          'branch-name' => [
- *              'dir' => 'corresponding subdirectory of public_html'
+ *              'dir' => 'corresponding subdirectory of home directory'
  *              'url' => 'URL for corresponding production/staging site'
  *          ],
  *          ...
@@ -40,7 +40,7 @@ $pull = 'git pull; git status';
 return [
     'deploybot' => [
         'master' => [
-            'dir' => 'deploybot',
+            'dir' => 'public_html/deploybot',
             'php' => 8,
         ],
         'commands' => [
@@ -51,11 +51,11 @@ return [
     ],
     'vore-arts-fund' => [
         'master' => [
-            'dir' => 'vore',
+            'dir' => 'public_html/vore',
             'php' => 8,
         ],
         'development' => [
-            'dir' => 'vore_staging',
+            'dir' => 'public_html/vore_staging',
             'php' => 8,
         ],
         'commands' => [
@@ -74,11 +74,11 @@ return [
     ],
     'muncie-events-api' => [
         'master' => [
-            'dir' => 'muncie_events4',
+            'dir' => 'public_html/muncie_events4',
             'php' => 8,
         ],
         'development' => [
-            'dir' => 'muncie_events4_staging',
+            'dir' => 'public_html/muncie_events4_staging',
             'php' => 8,
         ],
         'commands' => [
@@ -91,7 +91,7 @@ return [
     ],
     'sumner-phone' => [
         'master' => [
-            'dir' => 'sumner-phone',
+            'dir' => 'public_html/sumner-phone',
             'php' => 8, // 8.2
         ],
         'commands' => [
