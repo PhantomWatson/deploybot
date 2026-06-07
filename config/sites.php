@@ -31,8 +31,8 @@ $runComposerPhp82 = "$php82 $composer self-update; $php82 $composer install --no
 
 $runComposerPhp85 = "$php $composer self-update; $php $composer install --no-dev";
 
-$cake3CacheClear = "$php bin/cake.php orm_cache clear";
 $cake4CacheClear = "$php bin/cake.php schema_cache build --connection default";
+$cake5CacheClear = $cake4CacheClear;
 $migrate = "$php bin/cake.php migrations migrate";
 $npm = '/opt/cpanel/ea-nodejs22/bin/npm';
 $updateReactApp = "$npm install && $npm run webpack -- --env mode=production";
@@ -81,6 +81,17 @@ return [
         'development' => [
             'dir' => 'public_html/muncie_events4_staging',
             'php' => 8,
+        ],
+        'cake5' => [
+            'dir' => 'muncie_events5',
+            'php' => 8,
+            'commands' => [
+                $pull,
+                $setupComposer,
+                $runComposerPhp85,
+                $migrate,
+                $cake5CacheClear,
+            ],
         ],
         'commands' => [
             $pull,
