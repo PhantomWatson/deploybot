@@ -137,8 +137,7 @@ class Deploy
      */
     private function openSiteDir()
     {
-        $appDir = dirname(dirname(__FILE__));
-        $sitesRoot = dirname($appDir);
+        $sitesRoot = '/home/phanto41';
         $siteDir = $sitesRoot . '/' . $this->site[$this->branch]['dir'];
         if (!file_exists($siteDir)) {
             echo "$siteDir not found";
