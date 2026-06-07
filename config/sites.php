@@ -8,6 +8,7 @@
  *          'branch-name' => [
  *              'dir' => 'corresponding subdirectory of home directory'
  *              'url' => 'URL for corresponding production/staging site'
+ *              'commands' => array of commands to use instead of ['repo-name']['commands']
  *          ],
  *          ...
  *          'commands' => [

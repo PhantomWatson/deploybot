@@ -157,10 +157,9 @@ class Deploy
     {
         $phpVersion = $this->getPhpVersion();
         $this->openSiteDir();
-        $commands = array_merge(
-            $this->site[$this->branch]['commands'] ?? [],  // branch-specific commands
-            $this->site['commands'] ?? [],                        // branch-agnostic commands
-        );
+        $commands = $this->site[$this->branch]['commands'] // branch-specific commands
+            ?? $this->site['commands']                     // branch-agnostic commands
+            ?? [];                                         // no commands
         foreach ($commands as $command) {
             $command = $this->adaptCommandToPhpVersion($command, $phpVersion);
             $results = $this->runCommand($command);
