@@ -85,7 +85,7 @@ return [
         'commands' => [
             $pull,
             $setupComposer,
-            $runComposerPhp81,
+            $runComposerPhp85,
             $migrate,
             $cake5CacheClear,
         ],
