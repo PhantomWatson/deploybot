@@ -75,30 +75,19 @@ return [
     ],
     'muncie-events-api' => [
         'master' => [
-            'dir' => 'public_html/muncie_events4',
+            'dir' => 'muncie_events5',
             'php' => 8,
         ],
         'development' => [
-            'dir' => 'public_html/muncie_events4_staging',
+            'dir' => 'muncie_events_staging',
             'php' => 8,
-        ],
-        'cake5' => [
-            'dir' => 'muncie_events5',
-            'php' => 8,
-            'commands' => [
-                $pull,
-                $setupComposer,
-                $runComposerPhp85,
-                $migrate,
-                $cake5CacheClear,
-            ],
         ],
         'commands' => [
             $pull,
             $setupComposer,
             $runComposerPhp81,
             $migrate,
-            $cake4CacheClear,
+            $cake5CacheClear,
         ],
     ],
     'sumner-phone' => [
