@@ -104,4 +104,17 @@ return [
             "cd ./webroot/menu-builder && $npm install && $npm run build; cd ../..",
         ],
     ],
+    'ether' => [
+        'cake5' => [
+            'dir' => 'ether_staging',
+            'php' => 8, // 8.5
+        ],
+        'commands' => [
+            $pull,
+            $setupComposer,
+            $runComposerPhp85,
+            $migrate,
+            $cake5CacheClear,
+        ],
+    ],
 ];
