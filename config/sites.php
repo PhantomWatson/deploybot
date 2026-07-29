@@ -105,7 +105,11 @@ return [
         ],
     ],
     'ether' => [
-        'cake5' => [
+        'master' => [
+            'dir' => 'public_html/ether',
+            'php' => 8, // 8.5
+        ],
+        'dev' => [
             'dir' => 'ether_staging',
             'php' => 8, // 8.5
         ],
