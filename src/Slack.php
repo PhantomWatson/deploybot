@@ -7,6 +7,27 @@ class Slack
      * @var int Rough max length for a message
      */
     const MAX_LENGTH = 39000;
+
+    /**
+     * @var int Number of times to try sending a message before giving up
+     */
+    const MAX_ATTEMPTS = 3;
+
+    /**
+     * @var int Longest time, in seconds, to wait before a retry
+     */
+    const MAX_RETRY_DELAY = 10;
+
+    /**
+     * @var string Marks the start and end of a code block
+     */
+    const FENCE = '```';
+
+    /**
+     * @var int Room to leave in a message for the newline and fence that close an open code block
+     */
+    const FENCE_RESERVE = 4;
+
     public $content;
     public $curlResult;
 
@@ -24,49 +45,205 @@ class Slack
     }
 
     /**
-     * Transforms special characters in the current message to make them Slack-friendly
+     * Transforms special characters in $text to make them Slack-friendly
      *
-     * @return void
+     * @param string $text Text to escape
+     * @return string
      */
-    public function encodeContent()
+    public function escape($text)
     {
-        $this->content = str_replace(
-            ['&', '<', '>'],
-            [
-                urlencode('&amp;'),
-                urlencode('&lt;'),
-                urlencode('&gt;')
-            ],
-            $this->content
-        );
+        return str_replace(['&', '<', '>'], ['&amp;', '&lt;', '&gt;'], $text);
     }
 
     /**
-     * Sends a message to Slack
+     * Sends the current message to Slack, split into as many messages as required to avoid Slack's length limit
      *
-     * @return bool
+     * Any part of the message that couldn't be sent is kept in $this->content so that the next call retries it.
+     *
+     * @return bool True if everything was sent
      */
     public function send()
     {
-        $this->encodeContent();
-        $data = 'payload=' . json_encode([
-            'channel' => '#deploy',
-            'text' => $this->content,
-            'icon_emoji' => ':robot_face:',
-            'username' => 'Phantom Deploy-bot'
-        ]);
-        $urls = include dirname(dirname(__FILE__)) . '/config/slack_webhook_urls.php';
-        $url = $urls[$this->repoName ?? 'default'] ?? $urls['default'];
-        $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'POST');
-        curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $this->curlResult = curl_exec($ch);
-
-        // Reset content
+        $chunks = $this->chunkContent((string)$this->content);
         $this->content = '';
+        foreach ($chunks as $i => $chunk) {
+            if (!$this->sendChunk($chunk)) {
+                $this->content = implode("\n", array_slice($chunks, $i)) . "\n";
 
-        return $this->curlResult == 'ok';
+                return false;
+            }
+        }
+        $this->curlResult = 'ok';
+
+        return true;
+    }
+
+    /**
+     * Sends one message to Slack, retrying if the failure looks temporary
+     *
+     * @param string $text Unescaped message text
+     * @return bool
+     */
+    private function sendChunk($text)
+    {
+        $json = json_encode(
+            [
+                'channel' => '#deploy',
+                'icon_emoji' => ':robot_face:',
+                'text' => $this->escape($text),
+                'username' => 'Phantom Deploy-bot',
+            ],
+            JSON_INVALID_UTF8_SUBSTITUTE
+        );
+        $url = $this->getWebhookUrl();
+        for ($attempt = 1; $attempt <= self::MAX_ATTEMPTS; $attempt++) {
+            $response = $this->post($url, $json);
+            if ($response['status'] == 200 && $response['body'] === 'ok') {
+                return true;
+            }
+
+            $this->curlResult = $response['error'] ?: 'HTTP ' . $response['status'] . ': ' . $response['body'];
+            $isTemporary = $response['error'] !== ''
+                || $response['status'] == 429
+                || $response['status'] >= 500;
+            if (!$isTemporary || $attempt == self::MAX_ATTEMPTS) {
+                return false;
+            }
+
+            $delay = 2 ** ($attempt - 1);
+            if ($response['status'] == 429 && $response['retryAfter'] > 0) {
+                $delay = $response['retryAfter'];
+            }
+            $this->pause(min($delay, self::MAX_RETRY_DELAY));
+        }
+
+        return false;
+    }
+
+    /**
+     * Returns the Slack webhook URL for the current repo
+     *
+     * @return string
+     */
+    protected function getWebhookUrl()
+    {
+        $urls = include dirname(dirname(__FILE__)) . '/config/slack_webhook_urls.php';
+
+        return $urls[$this->repoName ?? 'default'] ?? $urls['default'];
+    }
+
+    /**
+     * POSTs a JSON string to $url
+     *
+     * @param string $url
+     * @param string $json
+     * @return array With keys body (string), error (string, empty if none), retryAfter (int seconds), status (int)
+     */
+    protected function post($url, $json)
+    {
+        $retryAfter = 0;
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_HEADERFUNCTION => function ($ch, $header) use (&$retryAfter) {
+                if (stripos($header, 'Retry-After:') === 0) {
+                    $retryAfter = (int)trim(substr($header, strlen('Retry-After:')));
+                }
+
+                return strlen($header);
+            },
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => $json,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 15,
+        ]);
+        $body = curl_exec($ch);
+
+        return [
+            'body' => $body === false ? '' : $body,
+            'error' => $body === false ? curl_error($ch) : '',
+            'retryAfter' => $retryAfter,
+            'status' => curl_getinfo($ch, CURLINFO_RESPONSE_CODE),
+        ];
+    }
+
+    /**
+     * Waits before retrying a request
+     *
+     * @param int $seconds
+     * @return void
+     */
+    protected function pause($seconds)
+    {
+        sleep($seconds);
+    }
+
+    /**
+     * Splits $content into messages that fit within Slack's length limit (after escaping), breaking between lines
+     *
+     * A code block that spans a break is closed at the end of one message and reopened at the start of the next.
+     *
+     * @param string $content Unescaped message
+     * @return string[]
+     */
+    public function chunkContent($content)
+    {
+        $limit = self::MAX_LENGTH - self::FENCE_RESERVE;
+        $chunks = [];
+        $lines = [];
+        $size = 0;
+        $inFence = false;
+        foreach (explode("\n", $content) as $line) {
+            $isFence = $line === self::FENCE;
+            foreach ($this->splitLine($line, $limit - strlen(self::FENCE) - 1) as $piece) {
+                $pieceSize = strlen($this->escape($piece)) + 1;
+                $isClosingFence = $isFence && $inFence;
+                if ($lines && !$isClosingFence && $size + $pieceSize > $limit) {
+                    if ($inFence) {
+                        $lines[] = self::FENCE;
+                    }
+                    $chunks[] = implode("\n", $lines);
+                    $lines = $inFence ? [self::FENCE] : [];
+                    $size = $inFence ? strlen(self::FENCE) + 1 : 0;
+                }
+                $lines[] = $piece;
+                $size += $pieceSize;
+            }
+            if ($isFence) {
+                $inFence = !$inFence;
+            }
+        }
+        if ($lines) {
+            $chunks[] = implode("\n", $lines);
+        }
+
+        return array_values(array_filter($chunks, fn($chunk) => trim($chunk) !== ''));
+    }
+
+    /**
+     * Splits a single line that is too long (once escaped) into pieces that fit
+     *
+     * @param string $line
+     * @param int $maxSize Maximum escaped size of a piece, including its newline
+     * @return string[]
+     */
+    private function splitLine($line, $maxSize)
+    {
+        if (strlen($this->escape($line)) + 1 <= $maxSize) {
+            return [$line];
+        }
+
+        // Escaping can expand a character to at most 5 bytes ('&' to '&amp;')
+        $maxBytes = intdiv($maxSize - 1, 5);
+        $pieces = [];
+        for ($offset = 0; $offset < strlen($line);) {
+            $piece = mb_strcut($line, $offset, $maxBytes);
+            $pieces[] = $piece;
+            $offset += strlen($piece);
+        }
+
+        return $pieces;
     }
 
     /**
@@ -119,19 +296,10 @@ class Slack
         }
         */
 
-        $this->addLine("*$command:*\n```\n$results\n```");
-    }
-
-    /**
-     * Outputs chunks of command output that don't exceed the max message length
-     *
-     * @param string $command
-     * @param string $results
-     * @return void
-     */
-    private function addCommandOutput($command, $results)
-    {
-
+        // Prevent backticks in the output from closing the code block early
+        // (a zero-width space breaks up the backticks)
+        $results = str_replace(self::FENCE, "``\u{200B}`", $results);
+        $this->addLine("*$command:*\n" . self::FENCE . "\n$results\n" . self::FENCE);
     }
 
     /**

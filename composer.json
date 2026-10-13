@@ -7,7 +7,8 @@
   "require": {
     "php": ">=8.1",
     "ext-curl": "*",
-    "ext-json": "*"
+    "ext-json": "*",
+    "ext-mbstring": "*"
   },
   "config": {
     "allow-plugins": {
