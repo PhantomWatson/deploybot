@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace App;
 
+use RuntimeException;
+
 class Log
 {
     /**
@@ -53,28 +55,35 @@ class Log
      * Writes the current log entry to the specified repository's log file, then removes the oldest entries if the file
      * has grown larger than MAX_SIZE
      *
-     * @param string $logName Git repo + branch name to use in log filename
+     * @param string $repoName Name of GitHub repository
      * @return void
+     * @throws RuntimeException If the log file couldn't be written or trimmed
      */
-    public function write(string $logName): void
+    public function write(string $repoName): void
     {
         $this->content .= self::ENTRY_END;
         $dir = dirname(__DIR__) . '/logs';
         if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
-            return;
+            throw new RuntimeException("Unable to create $dir");
         }
 
-        $handle = fopen("$dir/$logName.html", 'c+');
+        $path = "$dir/$repoName.html";
+        $handle = fopen($path, 'c+');
         if ($handle === false) {
-            return;
+            throw new RuntimeException("Unable to open $path");
         }
 
-        flock($handle, LOCK_EX);
-        fseek($handle, 0, SEEK_END);
-        fwrite($handle, $this->content);
-        $this->trim($handle);
-        flock($handle, LOCK_UN);
-        fclose($handle);
+        try {
+            flock($handle, LOCK_EX);
+            fseek($handle, 0, SEEK_END);
+            if (fwrite($handle, $this->content) !== strlen($this->content)) {
+                throw new RuntimeException("Unable to write to $path");
+            }
+            $this->trim($handle, $path);
+        } finally {
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        }
     }
 
     /**
@@ -84,13 +93,18 @@ class Log
      * always kept.
      *
      * @param resource $handle Handle of the log file, which must be locked and have the newest entry at its end
+     * @param string $path Path of the log file
      * @return void
+     * @throws RuntimeException If the file couldn't be read or rewritten
      */
-    private function trim($handle): void
+    private function trim($handle, string $path): void
     {
         rewind($handle);
         $data = stream_get_contents($handle);
-        if ($data === false || strlen($data) <= self::MAX_SIZE) {
+        if ($data === false) {
+            throw new RuntimeException("Unable to read $path to trim it");
+        }
+        if (strlen($data) <= self::MAX_SIZE) {
             return;
         }
 
@@ -98,8 +112,9 @@ class Log
         $boundary = strpos($data, self::ENTRY_END, strlen($data) - self::MAX_SIZE);
         $start = $boundary === false ? $newestStart : min($boundary + strlen(self::ENTRY_END), $newestStart);
 
-        ftruncate($handle, 0);
-        rewind($handle);
-        fwrite($handle, substr($data, $start));
+        $kept = substr($data, $start);
+        if (!ftruncate($handle, 0) || !rewind($handle) || fwrite($handle, $kept) !== strlen($kept)) {
+            throw new RuntimeException("Unable to trim $path");
+        }
     }
 }

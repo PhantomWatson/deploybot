@@ -77,7 +77,14 @@ class Deploy
 
         $this->sendSlackOutput();
         $this->log->addHtml($this->screenOutput->content);
-        $this->log->write($this->getLogName());
+        try {
+            $this->log->write($this->getLogName());
+        } catch (RuntimeException $e) {
+            $msg = 'Unable to write to the log: ' . $e->getMessage();
+            $this->slack->addLine("*$msg*");
+            $this->screenOutput->add($msg . "\n", 'red');
+            $this->sendSlackOutput();
+        }
     }
 
     private function getLogName(): string
