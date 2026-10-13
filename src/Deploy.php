@@ -18,6 +18,7 @@ class Deploy
 {
     public $branch;
     public $lastExitCode;
+    public $lockHandle;
     public $log;
     public $repoName;
     public $screenOutput;
@@ -44,7 +45,7 @@ class Deploy
 
             $this->site = Site::getSite($this->repoName);
             $this->validateBranch();
-            $this->runCommands();
+            $this->runWithLock();
         }
 
         $this->addSiteLinkToSlack();
@@ -146,6 +147,81 @@ class Deploy
         }
 
         chdir($siteDir);
+    }
+
+    /**
+     * Runs the deployment unless one is already running for the same site directory
+     *
+     * If one is running, this request leaves a "pending" marker and returns. The running deployment checks for that
+     * marker when it finishes and deploys again, which picks up every push that arrived in the meantime in one run.
+     *
+     * @return void
+     */
+    private function runWithLock()
+    {
+        $lockDir = dirname(__DIR__) . '/locks';
+        if (!is_dir($lockDir) && !mkdir($lockDir, 0775, true) && !is_dir($lockDir)) {
+            echo "Unable to create $lockDir";
+            exit;
+        }
+
+        $lockName = preg_replace('/[^A-Za-z0-9_-]/', '_', $this->site[$this->branch]['dir']);
+        $pendingPath = "$lockDir/$lockName.pending";
+        $this->lockHandle = fopen("$lockDir/$lockName.lock", 'c');
+        if (!$this->lockHandle) {
+            echo "Unable to open lock file for $lockName";
+            exit;
+        }
+
+        if (!$this->acquireLock($pendingPath)) {
+            $msg = "A deployment of the $this->branch branch of $this->repoName is already running. "
+                . 'Another will start when it finishes.';
+            $this->log->addLine($msg);
+            $this->slack->addLine($msg);
+            $this->screenOutput->add($msg . "\n");
+
+            return;
+        }
+
+        $isFollowUp = false;
+        do {
+            // Clear the marker before deploying so that a push that arrives during this deployment is noticed
+            if (file_exists($pendingPath)) {
+                unlink($pendingPath);
+            }
+
+            if ($isFollowUp) {
+                $msg = 'Deploying again to include changes pushed during the previous deployment';
+                $this->slack->addLine($msg);
+                $this->screenOutput->add($msg . "\n\n");
+            }
+
+            $this->runCommands();
+
+            // Unlock before checking for the marker. A request that fails to lock and then leaves a marker retries the
+            // lock afterward, so either it gets the lock itself or this check finds its marker. Neither can be missed.
+            flock($this->lockHandle, LOCK_UN);
+            $isFollowUp = true;
+        } while (file_exists($pendingPath) && flock($this->lockHandle, LOCK_EX | LOCK_NB));
+    }
+
+    /**
+     * Attempts to lock this site's deployments, leaving a "pending" marker if another deployment already holds the lock
+     *
+     * @param string $pendingPath Path of the marker file
+     * @return bool True if the lock was acquired
+     */
+    private function acquireLock(string $pendingPath): bool
+    {
+        if (flock($this->lockHandle, LOCK_EX | LOCK_NB)) {
+            return true;
+        }
+
+        touch($pendingPath);
+
+        // The other deployment may have finished after the attempt above but before the marker existed, in which case
+        // nothing would ever look at the marker. Try again so that this request runs the deployment in that case.
+        return flock($this->lockHandle, LOCK_EX | LOCK_NB);
     }
 
     /**

@@ -1,4 +1,5 @@
 .idea/*
+locks/*
 logs/*
 config/slack_webhook_urls.php
 config/allowed_ip_addresses.php
