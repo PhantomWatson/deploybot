@@ -24,3 +24,5 @@ A command in `config/sites.php` can be an array with a `paths` list (see the `$b
 - `config/slack_webhook_urls.php`, `config/github_secret.php`, `config/allowed_ip_addresses.php`: not tracked.
 
 `jobs/`, `locks/`, `logs/` and `state/` are created as needed and must be writable by the web server user.
+
+Each log file in `logs/` is limited to about 1 MB (`Log::MAX_SIZE`). When a write takes it over, the oldest whole entries are removed.
