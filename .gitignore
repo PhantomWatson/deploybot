@@ -1,7 +1,4 @@
 .idea/*
-jobs/*
-locks/*
-logs/*
 config/app.local.php
 config/slack_webhook_urls.php
 config/allowed_ip_addresses.php
@@ -9,4 +6,11 @@ config/github_secret.php
 vendor/*
 /node_modules/*
 composer.phar
+jobs/*
+!jobs/.gitkeep
+locks/*
+!locks/.gitkeep
+logs/*
+!logs/.gitkeep
 state/*
+!state/.gitkeep
