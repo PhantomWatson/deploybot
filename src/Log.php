@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace App;
 
 class Log
@@ -21,7 +23,7 @@ class Log
      * @param string $line Line to add
      * @return void
      */
-    public function addLine($line)
+    public function addLine(string $line): void
     {
         $this->content .= nl2br($line) . "<br />\n";
     }
@@ -31,7 +33,7 @@ class Log
      *
      * @return void
      */
-    public function write()
+    public function write(): void
     {
         $this->content .= '<hr />';
         $repoName = Request::getRepoName();

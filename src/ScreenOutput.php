@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace App;
 
 class ScreenOutput
@@ -20,7 +22,7 @@ class ScreenOutput
      * @param null|string $color Optional color for content
      * @return void
      */
-    public function add($content, $color = null)
+    public function add(string $content, ?string $color = null): void
     {
         if ($color && empty($_POST)) {
             $this->content .= '<span style="color: ' . $color . ';">' . $content . '</span>';

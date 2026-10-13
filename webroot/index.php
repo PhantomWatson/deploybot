@@ -1,11 +1,13 @@
 <?php
+declare(strict_types=1);
+
     $appDir = dirname(dirname(__FILE__));
-    spl_autoload_register(function ($className) use ($appDir) {
+    spl_autoload_register(function (string $className) use ($appDir): void {
         $className = str_replace('App\\', '', $className);
         include  $appDir . '/src/' . $className . '.php';
     });
 
-    function verifySignature($body) {
+    function verifySignature(string $body): bool {
         $headers = getallheaders();
         $secret = include dirname(dirname(__FILE__)) . '/config/github_secret.php';
         return hash_equals(

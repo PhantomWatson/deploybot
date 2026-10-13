@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace App;
 
 use Exception;
@@ -13,7 +15,7 @@ class Git
      * @return bool
      * @throws Exception
      */
-    public static function canPull($repoName, $branch)
+    public static function canPull(string $repoName, string $branch): bool
     {
         if (!Site::isValid($repoName)) {
             throw new Exception('Unrecognized repo: ' . $repoName);
@@ -43,7 +45,7 @@ class Git
             ],
             $pipes
         );
-        $results = is_resource($process) ? stream_get_contents($pipes[1]) : '';
+        $results = is_resource($process) ? (stream_get_contents($pipes[1]) ?: '') : '';
 
         return !stripos($results, 'modified: ');
     }

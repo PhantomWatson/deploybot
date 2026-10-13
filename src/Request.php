@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace App;
 
 use Exception;
@@ -11,7 +13,7 @@ class Request
      *
      * @return string
      */
-    public static function getIpAddress()
+    public static function getIpAddress(): string
     {
         return $_SERVER['REMOTE_ADDR'];
     }
@@ -19,24 +21,24 @@ class Request
     /**
      * Returns the name of the GitHub repository associated with the current request
      *
-     * @return string|bool
+     * @return string Empty if there is no repository name
      */
-    public static function getRepoName()
+    public static function getRepoName(): string
     {
         if (isset($_POST['payload'])) {
             $payload = json_decode($_POST['payload']);
             if (isset($payload->repository->name)) {
-                return $payload->repository->name;
+                return (string)$payload->repository->name;
             }
 
-            return false;
+            return '';
         }
 
         if (isset($_GET['path'])) {
             return explode('/', $_GET['path'])[0];
         }
 
-        return false;
+        return '';
     }
 
     /**
@@ -44,7 +46,7 @@ class Request
      *
      * @return bool
      */
-    public static function isGithubPing()
+    public static function isGithubPing(): bool
     {
         return isset($_SERVER['HTTP_X_GITHUB_EVENT']) && $_SERVER['HTTP_X_GITHUB_EVENT'] == 'ping';
     }
@@ -52,28 +54,29 @@ class Request
     /**
      * Returns the name of the branch associated with the current request
      *
-     * @return string|bool
+     * @return string Empty if there is no branch name
      */
-    public static function getBranch()
+    public static function getBranch(): string
     {
         $repoName = Request::getRepoName();
         $site = Site::getSite($repoName);
         $availableBranches = array_keys($site);
         if (empty($_POST)) {
-            if (strpos($_GET['path'], '/') === false) {
+            $path = $_GET['path'] ?? '';
+            if (strpos($path, '/') === false) {
                 header('HTTP/1.1 404 Not Found');
                 echo 'No branch specified. Branches that can be auto-deployed: ' . implode(', ', $availableBranches);
                 exit;
             }
 
-            return explode('/', $_GET['path'])[1];
+            return explode('/', $path)[1];
         } elseif (isset($_POST['payload'])) {
             $payload = json_decode($_POST['payload']);
 
-            return explode('/', $payload->ref)[2];
+            return explode('/', (string)($payload->ref ?? ''))[2] ?? '';
         }
 
-        return false;
+        return '';
     }
 
     /**
@@ -81,7 +84,7 @@ class Request
      *
      * @return string
      */
-    public static function getDeployTrigger()
+    public static function getDeployTrigger(): string
     {
         $branch = Request::getBranch();
         $repoName = Request::getRepoName();
@@ -105,12 +108,14 @@ class Request
     /**
      * Returns the decoded payload sent by a GitHub webhook
      *
-     * @return mixed|stdClass
+     * @return object
      */
-    public static function getPayload()
+    public static function getPayload(): object
     {
         if (isset($_POST['payload'])) {
-            return json_decode($_POST['payload']);
+            $payload = json_decode($_POST['payload']);
+
+            return is_object($payload) ? $payload : new stdClass();
         }
 
         return new stdClass();
@@ -121,7 +126,7 @@ class Request
      *
      * @return bool
      */
-    public static function isAuthorized()
+    public static function isAuthorized(): bool
     {
         $allowedIps = include dirname(dirname(__FILE__)) . '/config/allowed_ip_addresses.php';
         $ip = $_SERVER['REMOTE_ADDR'];
@@ -143,18 +148,18 @@ class Request
      * @param string $range IP address range in CIDR notation
      * @return bool
      */
-    public static function cidrMatch($ip, $range)
+    public static function cidrMatch(string $ip, string $range): bool
     {
         list ($subnet, $bits) = explode('/', $range);
         if ($bits === null) {
             $bits = 32;
         }
-        $ip = ip2long($ip);
-        $subnet = ip2long($subnet);
+        $ipLong = ip2long($ip);
+        $subnetLong = ip2long($subnet);
         $mask = -1 << (32 - $bits);
-        $subnet &= $mask; // nb: in case the supplied subnet wasn't correctly aligned
+        $subnetLong &= $mask; // nb: in case the supplied subnet wasn't correctly aligned
 
-        return ($ip & $mask) == $subnet;
+        return ($ipLong & $mask) == $subnetLong;
     }
 
     /**
@@ -163,7 +168,7 @@ class Request
      * @throws \Exception
      * @returns bool
      */
-    public static function isGitHub()
+    public static function isGitHub(): bool
     {
         // Get IP address ranges from GitHub
         $githubMetaUrl = 'https://api.github.com/meta';
@@ -171,7 +176,7 @@ class Request
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch,CURLOPT_USERAGENT,'Phantom Deploy-bot');
         $curlResult = curl_exec($ch);
-        $ipAddresses = json_decode($curlResult);
+        $ipAddresses = json_decode($curlResult === false ? '' : $curlResult);
         if (!isset($ipAddresses->hooks)) {
             throw new Exception('Unable to retrieve GitHub webhook IP address ranges');
         }

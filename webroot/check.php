@@ -1,8 +1,10 @@
 <?php
+declare(strict_types=1);
+
     $appDir = dirname(dirname(__FILE__));
-    spl_autoload_register(function ($className) use ($appDir) {
+    spl_autoload_register(function (string $className) use ($appDir): void {
         $className = str_replace('App\\', '', $className);
         include $appDir . '/src/' . $className . '.php';
     });
-    $siteName = isset($_GET['site']) ? $_GET['site'] : null;
+    $siteName = is_string($_GET['site'] ?? null) ? $_GET['site'] : '';
     echo App\Site::isValid($siteName) ? 1 : 0;

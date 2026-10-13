@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
     ob_start();
     $appDir = dirname(dirname(__FILE__));
     if (isset($_GET['site'])) {

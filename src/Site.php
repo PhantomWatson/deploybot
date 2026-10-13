@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace App;
 
 class Site
@@ -9,7 +11,7 @@ class Site
      * @param string $repoName Name of GitHub repository
      * @return bool
      */
-    public static function isValid($repoName)
+    public static function isValid(string $repoName): bool
     {
         $sites = include dirname(dirname(__FILE__)) . '/config/sites.php';
 
@@ -22,11 +24,11 @@ class Site
      * @param string $repoName Name of GitHub repository
      * @return array
      */
-    public static function getSite($repoName)
+    public static function getSite(string $repoName): array
     {
         $sites = self::getSites();
 
-        return $sites[$repoName];
+        return $sites[$repoName] ?? [];
     }
 
     /**
@@ -34,7 +36,7 @@ class Site
      *
      * @return array
      */
-    public static function getSites()
+    public static function getSites(): array
     {
         return include dirname(dirname(__FILE__)) . '/config/sites.php';
     }
@@ -46,7 +48,7 @@ class Site
      * @param array $site Array of information about a site
      * @return bool
      */
-    public static function isValidBranch($branch, $site)
+    public static function isValidBranch(string $branch, array $site): bool
     {
         $availableBranches = Site::getAvailableBranches($site);
 
@@ -59,7 +61,7 @@ class Site
      * @param array $site Array of information about a site
      * @return array
      */
-    public static function getAvailableBranches($site)
+    public static function getAvailableBranches(array $site): array
     {
         if (isset($site['commands'])) {
             unset($site['commands']);

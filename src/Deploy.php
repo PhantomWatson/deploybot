@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace App;
 
 use Exception;
@@ -57,7 +59,7 @@ class Deploy
      *
      * @return void
      */
-    private function validateIpAddress()
+    private function validateIpAddress(): void
     {
         if (!$this->validateIpAddresses) {
             return;
@@ -85,7 +87,7 @@ class Deploy
      *
      * @return void
      */
-    private function handleGithubPing()
+    private function handleGithubPing(): void
     {
         if (!Request::isGithubPing()) {
             return;
@@ -101,7 +103,7 @@ class Deploy
      *
      * @return string
      */
-    private function getRepoName()
+    private function getRepoName(): string
     {
         $repoName = Request::getRepoName();
         if (!$repoName) {
@@ -123,7 +125,7 @@ class Deploy
      *
      * @return void
      */
-    private function validateBranch()
+    private function validateBranch(): void
     {
         if (!Site::isValidBranch($this->branch, $this->site)) {
             echo "$this->branch branch can't be auto-deployed. ";
@@ -137,7 +139,7 @@ class Deploy
      *
      * @return void
      */
-    private function openSiteDir()
+    private function openSiteDir(): void
     {
         $sitesRoot = '/home/phanto41';
         $siteDir = $sitesRoot . '/' . $this->site[$this->branch]['dir'];
@@ -157,7 +159,7 @@ class Deploy
      *
      * @return void
      */
-    private function runWithLock()
+    private function runWithLock(): void
     {
         $lockDir = dirname(__DIR__) . '/locks';
         if (!is_dir($lockDir) && !mkdir($lockDir, 0775, true) && !is_dir($lockDir)) {
@@ -229,7 +231,7 @@ class Deploy
      *
      * @return void
      */
-    private function runCommands()
+    private function runCommands(): void
     {
         $phpVersion = $this->getPhpVersion();
         $this->openSiteDir();
@@ -260,14 +262,14 @@ class Deploy
      *
      * @return void
      */
-    private function initializeLogging()
+    private function initializeLogging(): void
     {
         $this->log = new Log();
         $this->screenOutput = new ScreenOutput();
         $this->slack = new Slack();
     }
 
-    private function logTrigger()
+    private function logTrigger(): void
     {
         $triggerMsg = Request::getDeployTrigger();
         $this->log->addLine($triggerMsg);
@@ -280,7 +282,7 @@ class Deploy
      *
      * @return void
      */
-    private function sendSlackOutput()
+    private function sendSlackOutput(): void
     {
         if (!$this->slack->content) {
             $this->screenOutput->add('No message to send to Slack' . PHP_EOL);
@@ -297,7 +299,7 @@ class Deploy
      *
      * @return void
      */
-    private function addSiteLinkToSlack()
+    private function addSiteLinkToSlack(): void
     {
         if (isset($this->site[$this->branch]['url'])) {
             $this->slack->addLine('*Load updated site:* ' . $this->site[$this->branch]['url']);
@@ -325,7 +327,7 @@ class Deploy
         fclose($pipes[1]);
         $this->lastExitCode = proc_close($process);
 
-        return $output;
+        return $output === false ? '' : $output;
     }
 
     /**
@@ -333,7 +335,7 @@ class Deploy
      *
      * @return void
      */
-    private function setEnvVars()
+    private function setEnvVars(): void
     {
         //putenv('COMPOSER_HOME=/home/okbvtfr/.composer');
     }

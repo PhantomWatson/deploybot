@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 namespace App;
 
 class Slack
@@ -39,7 +41,7 @@ class Slack
      * @param string $line Line of text to add
      * @return void
      */
-    public function addLine($line)
+    public function addLine(string $line): void
     {
         $this->content .= $line . "\n";
     }
@@ -50,7 +52,7 @@ class Slack
      * @param string $text Text to escape
      * @return string
      */
-    public function escape($text)
+    public function escape(string $text): string
     {
         return str_replace(['&', '<', '>'], ['&amp;', '&lt;', '&gt;'], $text);
     }
@@ -62,7 +64,7 @@ class Slack
      *
      * @return bool True if everything was sent
      */
-    public function send()
+    public function send(): bool
     {
         $chunks = $this->chunkContent((string)$this->content);
         $this->content = '';
@@ -84,7 +86,7 @@ class Slack
      * @param string $text Unescaped message text
      * @return bool
      */
-    private function sendChunk($text)
+    private function sendChunk(string $text): bool
     {
         $json = json_encode(
             [
@@ -95,6 +97,12 @@ class Slack
             ],
             JSON_INVALID_UTF8_SUBSTITUTE
         );
+        if ($json === false) {
+            $this->curlResult = 'Unable to encode message as JSON';
+
+            return false;
+        }
+
         $url = $this->getWebhookUrl();
         for ($attempt = 1; $attempt <= self::MAX_ATTEMPTS; $attempt++) {
             $response = $this->post($url, $json);
@@ -125,7 +133,7 @@ class Slack
      *
      * @return string
      */
-    protected function getWebhookUrl()
+    protected function getWebhookUrl(): string
     {
         $urls = include dirname(dirname(__FILE__)) . '/config/slack_webhook_urls.php';
 
@@ -139,13 +147,13 @@ class Slack
      * @param string $json
      * @return array With keys body (string), error (string, empty if none), retryAfter (int seconds), status (int)
      */
-    protected function post($url, $json)
+    protected function post(string $url, string $json): array
     {
         $retryAfter = 0;
         $ch = curl_init($url);
         curl_setopt_array($ch, [
             CURLOPT_CONNECTTIMEOUT => 5,
-            CURLOPT_HEADERFUNCTION => function ($ch, $header) use (&$retryAfter) {
+            CURLOPT_HEADERFUNCTION => function (\CurlHandle $ch, string $header) use (&$retryAfter): int {
                 if (stripos($header, 'Retry-After:') === 0) {
                     $retryAfter = (int)trim(substr($header, strlen('Retry-After:')));
                 }
@@ -174,7 +182,7 @@ class Slack
      * @param int $seconds
      * @return void
      */
-    protected function pause($seconds)
+    protected function pause(int $seconds): void
     {
         sleep($seconds);
     }
@@ -187,7 +195,7 @@ class Slack
      * @param string $content Unescaped message
      * @return string[]
      */
-    public function chunkContent($content)
+    public function chunkContent(string $content): array
     {
         $limit = self::MAX_LENGTH - self::FENCE_RESERVE;
         $chunks = [];
@@ -218,7 +226,7 @@ class Slack
             $chunks[] = implode("\n", $lines);
         }
 
-        return array_values(array_filter($chunks, fn($chunk) => trim($chunk) !== ''));
+        return array_values(array_filter($chunks, fn(string $chunk): bool => trim($chunk) !== ''));
     }
 
     /**
@@ -228,7 +236,7 @@ class Slack
      * @param int $maxSize Maximum escaped size of a piece, including its newline
      * @return string[]
      */
-    private function splitLine($line, $maxSize)
+    private function splitLine(string $line, int $maxSize): array
     {
         if (strlen($this->escape($line)) + 1 <= $maxSize) {
             return [$line];
@@ -253,7 +261,7 @@ class Slack
      * @param string $results Results of command
      * @return void
      */
-    public function addAbridged($command, $results)
+    public function addAbridged(string $command, string $results): void
     {
         if ($command == 'git pull') {
             $keyStrings = [
@@ -310,7 +318,7 @@ class Slack
      * @param string $prefix Optional prefix for added line
      * @return void
      */
-    public function addLinesWithString($message, $search, $prefix = '')
+    public function addLinesWithString(string $message, string $search, string $prefix = ''): void
     {
         if (strpos($message, $search) === false) {
             return;
@@ -330,7 +338,7 @@ class Slack
      * @param string $msg Message
      * @return string
      */
-    public function trimDetails($msg)
+    public function trimDetails(string $msg): string
     {
         // Remove leading "- "
         if (substr($msg, 0, 2) == '- ') {
@@ -373,7 +381,7 @@ class Slack
      * @param string $msg Message to add
      * @return void
      */
-    public function addTriggerMsg($msg)
+    public function addTriggerMsg(string $msg): void
     {
         if (strpos($msg, 'Push from') === 0) {
             $pos = strpos($msg, ' updated ');
