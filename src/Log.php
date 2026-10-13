@@ -53,10 +53,10 @@ class Log
      * Writes the current log entry to the specified repository's log file, then removes the oldest entries if the file
      * has grown larger than MAX_SIZE
      *
-     * @param string $repoName Name of GitHub repository
+     * @param string $logName Git repo + branch name to use in log filename
      * @return void
      */
-    public function write(string $repoName): void
+    public function write(string $logName): void
     {
         $this->content .= self::ENTRY_END;
         $dir = dirname(__DIR__) . '/logs';
@@ -64,7 +64,7 @@ class Log
             return;
         }
 
-        $handle = fopen("$dir/$repoName.html", 'c+');
+        $handle = fopen("$dir/$logName.html", 'c+');
         if ($handle === false) {
             return;
         }

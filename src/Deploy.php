@@ -77,7 +77,12 @@ class Deploy
 
         $this->sendSlackOutput();
         $this->log->addHtml($this->screenOutput->content);
-        $this->log->write($this->repoName);
+        $this->log->write($this->getLogName());
+    }
+
+    private function getLogName(): string
+    {
+        return $this->repoName . '-' . $this->branch;
     }
 
     /**
