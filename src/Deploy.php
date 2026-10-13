@@ -17,6 +17,7 @@ use Exception;
 class Deploy
 {
     public $branch;
+    public $lastExitCode;
     public $log;
     public $repoName;
     public $screenOutput;
@@ -165,6 +166,9 @@ class Deploy
             if (!$results) {
                 $results = '(no output)';
             }
+            if ($this->lastExitCode !== 0) {
+                $results = trim($results) . "\n(exit code $this->lastExitCode)";
+            }
 
             $this->screenOutput->add('$ ', '#6BE234');
             $this->screenOutput->add($command . "\n", '#729FCF');
@@ -230,20 +234,21 @@ class Deploy
             $command,
             [
                 1 => ['pipe', 'w'], // stdout
-                2 => ['pipe', 'w'], // stderr
+                2 => ['redirect', 1], // stderr, sharing stdout's pipe so that neither can fill up and block the process
             ],
             $pipes,
         );
         if (!is_resource($process)) {
+            $this->lastExitCode = -1;
+
             return 'Failed to start process';
         }
 
-        // Concatenate stdout and stderr
-        $output = stream_get_contents($pipes[1]) . stream_get_contents($pipes[2]);
+        $output = stream_get_contents($pipes[1]);
 
         fclose($pipes[1]);
-        fclose($pipes[2]);
-        proc_close($process);
+        $this->lastExitCode = proc_close($process);
+
         return $output;
     }
 
