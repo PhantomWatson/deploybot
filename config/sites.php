@@ -13,6 +13,13 @@
  *          ...
  *          'commands' => [
  *              'command', // e.g. 'gulp less'
+ *              [
+ *                  // A command that only runs if something has changed since it last succeeded (see $build below)
+ *                  'command' => 'command',
+ *                  'key' => 'optional unique name for this step (default: the command)',
+ *                  'outputs' => ['optional paths that the command produces. If any is missing, it always runs'],
+ *                  'paths' => ['paths in the repository that the command depends on'],
+ *              ],
  *              ...
  *          ]
  *      ]
@@ -36,6 +43,21 @@ $cake5CacheClear = $cake4CacheClear;
 $migrate = "$php bin/cake.php migrations migrate";
 $npm = '/opt/cpanel/ea-nodejs22/bin/npm';
 $updateReactApp = "$npm install && $npm run webpack -- --env mode=production";
+
+/**
+ * Returns a command that runs in a subdirectory of the site and is skipped if nothing in that directory has changed
+ * since it last succeeded
+ *
+ * @param string $dir Subdirectory, relative to the site's root
+ * @param string $command Command to run in that directory
+ * @param string[] $dependsOn Other paths in the repository whose changes also require running the command
+ * @return array
+ */
+$build = fn(string $dir, string $command, array $dependsOn = []): array => [
+    'command' => "cd ./$dir && $command",
+    'key' => $dir,
+    'paths' => [$dir, ...$dependsOn],
+];
 
 return [
     'deploybot' => [
@@ -66,12 +88,12 @@ return [
             $runComposerPhp85,
             $migrate,
             $cake4CacheClear,
-            "cd ./config/webpack && $npm install; cd ../..",
-            "cd ./webroot/vote-app && $updateReactApp; cd ../..",
-            "cd ./webroot/image-uploader && $updateReactApp; cd ../..",
-            "cd ./webroot/rich-text-editor && $npm install && $npm run build; cd ../..",
-            "cd ./webroot/transaction-form && $npm install && $npm run build; cd ../..",
-            "cd ./webroot/repayment-form && $npm install && $npm run build; cd ../..",
+            $build('config/webpack', "$npm install"),
+            $build('webroot/vote-app', $updateReactApp, ['config/webpack']),
+            $build('webroot/image-uploader', $updateReactApp, ['config/webpack']),
+            $build('webroot/rich-text-editor', "$npm install && $npm run build", ['config/webpack']),
+            $build('webroot/transaction-form', "$npm install && $npm run build", ['config/webpack']),
+            $build('webroot/repayment-form', "$npm install && $npm run build", ['config/webpack']),
         ],
     ],
     'muncie-events-api' => [
@@ -104,7 +126,7 @@ return [
             $runComposerPhp82,
             $migrate,
             $cake4CacheClear,
-            "cd ./webroot/menu-builder && $npm install && $npm run build; cd ../..",
+            $build('webroot/menu-builder', "$npm install && $npm run build"),
         ],
     ],
     'ether' => [

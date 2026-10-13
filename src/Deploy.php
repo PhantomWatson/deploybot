@@ -3,134 +3,129 @@ declare(strict_types=1);
 
 namespace App;
 
-use Exception;
+use RuntimeException;
+use Throwable;
 
 /**
  * Class Deploy
  *
+ * Deploys one branch of one site. Meant to be run by scripts/deploy-worker.php
+ *
  * @package App
  * @property array $site
+ * @property BuildState $buildState
  * @property Log $log
  * @property ScreenOutput $screenOutput
  * @property Slack $slack
  * @property string $branch
  * @property string $repoName
+ * @property string $trigger
+ * @property int $lastExitCode
+ * @property resource|null $lockHandle
  */
 class Deploy
 {
-    public $branch;
-    public $lastExitCode;
-    public $lockHandle;
-    public $log;
-    public $repoName;
-    public $screenOutput;
-    public $site;
-    public $slack;
-    private $validateIpAddresses = false;
+    public string $branch;
+    public BuildState $buildState;
+    public int $lastExitCode;
+    public $lockHandle = null;
+    public Log $log;
+    public string $repoName;
+    public ScreenOutput $screenOutput;
+    public array $site;
+    public Slack $slack;
+    public string $trigger;
 
     /**
      * Deploy constructor
+     *
+     * @param string $repoName Name of GitHub repository
+     * @param string $branch Name of branch to deploy
+     * @param string $trigger Message describing what caused this deployment
+     * @param Slack|null $slack Optional replacement for the default Slack client
      */
-    public function __construct()
+    public function __construct(string $repoName, string $branch, string $trigger, ?Slack $slack = null)
     {
-        $this->validateIpAddress();
-        $this->initializeLogging();
-        $this->setEnvVars();
+        $this->repoName = $repoName;
+        $this->branch = $branch;
+        $this->trigger = $trigger;
+        $this->log = new Log();
+        $this->screenOutput = new ScreenOutput();
+        $this->slack = $slack ?? new Slack();
+        $this->slack->repoName = $repoName;
+    }
 
-        if (Request::isGithubPing()) {
-            $this->handleGithubPing();
-        } else {
-            $this->logTrigger();
-            $this->repoName = $this->getRepoName();
-            $this->slack->repoName = $this->repoName;
-            $this->branch = Request::getBranch();
+    /**
+     * Deploys the site and reports the results to Slack and the log
+     *
+     * @return void
+     */
+    public function run(): void
+    {
+        try {
+            $this->log->addLine($this->trigger);
+            $this->log->addLine('');
+            $this->slack->addTriggerMsg($this->trigger);
 
-            $this->site = Site::getSite($this->repoName);
-            $this->validateBranch();
-            $this->runWithLock();
+            $this->validate();
+            if ($this->runWithLock()) {
+                $this->addSiteLinkToSlack();
+            }
+        } catch (Throwable $e) {
+            $this->reportError('Deployment failed: ' . $e->getMessage());
         }
 
-        $this->addSiteLinkToSlack();
+        $this->sendSlackOutput();
+        $this->log->addHtml($this->screenOutput->content);
+        $this->log->write($this->repoName);
+    }
+
+    /**
+     * Reports a PHP fatal error, which can't be caught as an exception. Intended to be a shutdown function.
+     *
+     * @return void
+     */
+    public function reportFatalError(): void
+    {
+        $error = error_get_last();
+        $fatalTypes = [E_COMPILE_ERROR, E_CORE_ERROR, E_ERROR, E_PARSE, E_RECOVERABLE_ERROR];
+        if (!$error || !in_array($error['type'], $fatalTypes, true)) {
+            return;
+        }
+
+        $this->reportError("Deployment crashed: {$error['message']} in {$error['file']}:{$error['line']}");
         $this->sendSlackOutput();
     }
 
     /**
-     * Forbids unknown IP addresses
+     * Adds an error message to the output for the screen, log, and Slack
      *
+     * @param string $msg Message
      * @return void
      */
-    private function validateIpAddress(): void
+    private function reportError(string $msg): void
     {
-        if (!$this->validateIpAddresses) {
-            return;
-        }
-
-        if (Request::isAuthorized()) {
-            return;
-        }
-
-        try {
-            if (!Request::isGitHub()) {
-                header('HTTP/1.1 403 Forbidden');
-                echo 'Sorry, your IP address (' . Request::getIpAddress() . ') isn\'t authorized. 🙁';
-                exit;
-            }
-        } catch (Exception $e) {
-            header('HTTP/1.1 500 Internal Server Error');
-            echo $e->getMessage();
-            exit;
-        }
-    }
-
-    /**
-     * Replies and aborts execution if this request is a Github ping
-     *
-     * @return void
-     */
-    private function handleGithubPing(): void
-    {
-        if (!Request::isGithubPing()) {
-            return;
-        }
-        $msg = 'GitHub ping received for ' . $this->getRepoName();
-        echo $msg;
         $this->log->addLine($msg);
-        $this->slack->addLine($msg);
+        $this->slack->addLine("*$msg*");
+        $this->screenOutput->add($msg . "\n", 'red');
     }
 
     /**
-     * Retrieves this request's valid repository name or throws an error if it's missing or invalid
-     *
-     * @return string
-     */
-    private function getRepoName(): string
-    {
-        $repoName = Request::getRepoName();
-        if (!$repoName) {
-            header('HTTP/1.1 404 Not Found');
-            echo 'No valid repo name provided';
-            exit;
-        }
-        if (!Site::isValid($repoName)) {
-            header('HTTP/1.1 404 Not Found');
-            echo 'Unrecognized repo name: ' . $repoName;
-            exit;
-        }
-
-        return $repoName;
-    }
-
-    /**
-     * Halts execution if the current branch can't be auto-deployed
+     * Throws an exception if this repository and branch can't be auto-deployed
      *
      * @return void
+     * @throws RuntimeException
      */
-    private function validateBranch(): void
+    private function validate(): void
     {
+        if (!Site::isValid($this->repoName)) {
+            throw new RuntimeException("Unrecognized repo name: $this->repoName");
+        }
+
+        $this->site = Site::getSite($this->repoName);
         if (!Site::isValidBranch($this->branch, $this->site)) {
-            echo "$this->branch branch can't be auto-deployed. ";
-            echo "Branches that can be auto-deployed: " . implode(', ', Site::getAvailableBranches($this->site));
-            exit;
+            $available = implode(', ', Site::getAvailableBranches($this->site));
+            throw new RuntimeException("$this->branch branch can't be auto-deployed. Available: $available");
         }
     }
 
@@ -138,14 +133,13 @@ class Deploy
      * Changes the current working directory to the appropriate website
      *
      * @return void
+     * @throws RuntimeException
      */
     private function openSiteDir(): void
     {
-        $sitesRoot = '/home/phanto41';
-        $siteDir = $sitesRoot . '/' . $this->site[$this->branch]['dir'];
+        $siteDir = Config::get('sitesRoot') . '/' . $this->site[$this->branch]['dir'];
         if (!file_exists($siteDir)) {
-            echo "$siteDir not found";
-            exit;
+            throw new RuntimeException("$siteDir not found");
         }
 
         chdir($siteDir);
@@ -157,23 +151,23 @@ class Deploy
      * If one is running, this request leaves a "pending" marker and returns. The running deployment checks for that
      * marker when it finishes and deploys again, which picks up every push that arrived in the meantime in one run.
      *
-     * @return void
+     * @return bool True if this request deployed the site, or false if it left that to the deployment in progress
+     * @throws RuntimeException
      */
-    private function runWithLock(): void
+    private function runWithLock(): bool
     {
         $lockDir = dirname(__DIR__) . '/locks';
         if (!is_dir($lockDir) && !mkdir($lockDir, 0775, true) && !is_dir($lockDir)) {
-            echo "Unable to create $lockDir";
-            exit;
+            throw new RuntimeException("Unable to create $lockDir");
         }
 
-        $lockName = preg_replace('/[^A-Za-z0-9_-]/', '_', $this->site[$this->branch]['dir']);
+        $lockName = $this->getSiteKey();
         $pendingPath = "$lockDir/$lockName.pending";
-        $this->lockHandle = fopen("$lockDir/$lockName.lock", 'c');
-        if (!$this->lockHandle) {
-            echo "Unable to open lock file for $lockName";
-            exit;
+        $lockHandle = fopen("$lockDir/$lockName.lock", 'c');
+        if ($lockHandle === false) {
+            throw new RuntimeException("Unable to open lock file for $lockName");
         }
+        $this->lockHandle = $lockHandle;
 
         if (!$this->acquireLock($pendingPath)) {
             $msg = "A deployment of the $this->branch branch of $this->repoName is already running. "
@@ -182,7 +176,7 @@ class Deploy
             $this->slack->addLine($msg);
             $this->screenOutput->add($msg . "\n");
 
-            return;
+            return false;
         }
 
         $isFollowUp = false;
@@ -205,6 +199,18 @@ class Deploy
             flock($this->lockHandle, LOCK_UN);
             $isFollowUp = true;
         } while (file_exists($pendingPath) && flock($this->lockHandle, LOCK_EX | LOCK_NB));
+
+        return true;
+    }
+
+    /**
+     * Returns a name, safe for use in file names, that identifies the current site directory
+     *
+     * @return string
+     */
+    private function getSiteKey(): string
+    {
+        return preg_replace('/[^A-Za-z0-9_-]/', '_', $this->site[$this->branch]['dir']);
     }
 
     /**
@@ -229,17 +235,41 @@ class Deploy
     /**
      * Runs all of the commands for deploying an update and outputs the results to the screen and Slack
      *
+     * A command can be a string, or an array with these keys:
+     * - command: The command to run
+     * - key: Optional name that identifies this step (default: the command)
+     * - outputs: Optional paths that the command produces. If any is missing, the command isn't skipped.
+     * - paths: Paths in the repository that the command's results depend on. The command is skipped if nothing in
+     *   them has changed since the last time the command succeeded.
+     *
      * @return void
      */
     private function runCommands(): void
     {
         $phpVersion = $this->getPhpVersion();
         $this->openSiteDir();
-        $commands = $this->site[$this->branch]['commands'] // branch-specific commands
-            ?? $this->site['commands']                     // branch-agnostic commands
-            ?? [];                                         // no commands
-        foreach ($commands as $command) {
-            $command = $this->adaptCommandToPhpVersion($command, $phpVersion);
+        $this->buildState = new BuildState(dirname(__DIR__) . '/state/' . $this->getSiteKey() . '.json');
+        $steps = $this->site[$this->branch]['commands'] // branch-specific commands
+            ?? $this->site['commands']                  // branch-agnostic commands
+            ?? [];                                      // no commands
+        foreach ($steps as $step) {
+            if (is_string($step)) {
+                $step = ['command' => $step];
+            }
+            $key = $step['key'] ?? $step['command'];
+
+            // Commit that this command would build, for commands that can be skipped
+            $head = isset($step['paths']) ? Git::head() : null;
+            $skipReason = $this->getSkipReason($step, $key, $head);
+            if ($skipReason !== null) {
+                $this->screenOutput->add('$ ', '#6BE234');
+                $this->screenOutput->add(htmlspecialchars($step['command']) . "\n", '#729FCF');
+                $this->screenOutput->add("(skipped: $skipReason)\n\n");
+                $this->slack->addLine("*$key:* skipped ($skipReason)");
+                continue;
+            }
+
+            $command = $this->adaptCommandToPhpVersion($step['command'], $phpVersion);
             $results = $this->runCommand($command);
             if (!$results) {
                 $results = '(no output)';
@@ -249,32 +279,52 @@ class Deploy
             }
 
             $this->screenOutput->add('$ ', '#6BE234');
-            $this->screenOutput->add($command . "\n", '#729FCF');
+            $this->screenOutput->add(htmlspecialchars($command) . "\n", '#729FCF');
             $this->screenOutput->add(htmlentities(trim($results)) . "\n\n");
 
             $this->slack->addAbridged($command, $results);
             $this->sendSlackOutput();
+
+            if ($head !== null && $this->lastExitCode === 0) {
+                $this->buildState->set($key, $head);
+            }
         }
     }
 
     /**
-     * Initializes output for the log, slack, and screen, and logs the trigger message
+     * Returns the reason that a step can be skipped, or NULL if it needs to run
      *
-     * @return void
+     * Anything unexpected (no recorded success, a recorded commit that no longer exists, a git error) means that the
+     * step runs.
+     *
+     * @param array $step Step from the site's commands
+     * @param string $key Identifies the step in the build state
+     * @param string|null $head Current commit, if known
+     * @return string|null
      */
-    private function initializeLogging(): void
+    private function getSkipReason(array $step, string $key, ?string $head): ?string
     {
-        $this->log = new Log();
-        $this->screenOutput = new ScreenOutput();
-        $this->slack = new Slack();
-    }
+        $paths = $step['paths'] ?? [];
+        if (!$paths || $head === null) {
+            return null;
+        }
 
-    private function logTrigger(): void
-    {
-        $triggerMsg = Request::getDeployTrigger();
-        $this->log->addLine($triggerMsg);
-        $this->log->addLine('');
-        $this->slack->addTriggerMsg($triggerMsg);
+        $lastBuilt = $this->buildState->get($key);
+        if ($lastBuilt === null || !Git::hasCommit($lastBuilt)) {
+            return null;
+        }
+
+        foreach ($step['outputs'] ?? [] as $output) {
+            if (!file_exists($output)) {
+                return null;
+            }
+        }
+
+        if (!Git::unchangedSince($lastBuilt, $paths)) {
+            return null;
+        }
+
+        return 'no changes in ' . implode(', ', $paths);
     }
 
     /**
@@ -328,16 +378,6 @@ class Deploy
         $this->lastExitCode = proc_close($process);
 
         return $output === false ? '' : $output;
-    }
-
-    /**
-     * Sets environment variables
-     *
-     * @return void
-     */
-    private function setEnvVars(): void
-    {
-        //putenv('COMPOSER_HOME=/home/okbvtfr/.composer');
     }
 
     /**

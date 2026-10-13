@@ -28,6 +28,5 @@ if (verifySignature($body) === false) {
     exit;
 }
 
-// Deploy
-$deploy = new App\Deploy();
-echo $deploy->screenOutput->content;
+// Queue a deployment, which runs in the background
+(new App\Webhook())->handle();

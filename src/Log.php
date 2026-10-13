@@ -29,15 +29,30 @@ class Log
     }
 
     /**
-     * Writes the current log entry to a log file
+     * Adds preformatted HTML (e.g. a deployment's screen output) to the current log entry
      *
+     * @param string $html HTML to add
      * @return void
      */
-    public function write(): void
+    public function addHtml(string $html): void
+    {
+        $this->content .= "<pre>$html</pre>\n";
+    }
+
+    /**
+     * Writes the current log entry to the specified repository's log file
+     *
+     * @param string $repoName Name of GitHub repository
+     * @return void
+     */
+    public function write(string $repoName): void
     {
         $this->content .= '<hr />';
-        $repoName = Request::getRepoName();
-        $filename = dirname(dirname(__FILE__)) . "/logs/$repoName.html";
-        file_put_contents($filename, $this->content, FILE_APPEND);
+        $dir = dirname(__DIR__) . '/logs';
+        if (!is_dir($dir) && !mkdir($dir, 0775, true) && !is_dir($dir)) {
+            return;
+        }
+
+        file_put_contents("$dir/$repoName.html", $this->content, FILE_APPEND | LOCK_EX);
     }
 }
