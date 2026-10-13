@@ -36,7 +36,6 @@ $cake5CacheClear = $cake4CacheClear;
 $migrate = "$php bin/cake.php migrations migrate";
 $npm = '/opt/cpanel/ea-nodejs22/bin/npm';
 $updateReactApp = "$npm install && $npm run webpack -- --env mode=production";
-$pull = 'git pull; git status';
 
 return [
     'deploybot' => [
@@ -45,7 +44,8 @@ return [
             'php' => 8,
         ],
         'commands' => [
-            $pull,
+            'git pull',
+            'git status',
             $setupComposer,
             $runComposerPhp85,
         ],
@@ -60,7 +60,8 @@ return [
             'php' => 8,
         ],
         'commands' => [
-            $pull,
+            'git pull',
+            'git status',
             $setupComposer,
             $runComposerPhp85,
             $migrate,
@@ -83,7 +84,8 @@ return [
             'php' => 8,
         ],
         'commands' => [
-            $pull,
+            'git pull',
+            'git status',
             $setupComposer,
             $runComposerPhp85,
             $migrate,
@@ -96,7 +98,8 @@ return [
             'php' => 8, // 8.2
         ],
         'commands' => [
-            $pull,
+            'git pull',
+            'git status',
             $setupComposer,
             $runComposerPhp82,
             $migrate,
@@ -114,7 +117,8 @@ return [
             'php' => 8, // 8.5
         ],
         'commands' => [
-            $pull,
+            'git pull',
+            'git status',
             $setupComposer,
             $runComposerPhp85,
             $migrate,
