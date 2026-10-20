@@ -169,11 +169,18 @@ class Webhook
             return false;
         }
 
+        // The worker reports its own results, so anything it prints here is an error (e.g. a crash before it starts)
+        $logDir = dirname(__DIR__) . '/logs';
+        if (!is_dir($logDir) && !mkdir($logDir, 0775, true) && !is_dir($logDir)) {
+            return false;
+        }
+
         $command = sprintf(
-            'nohup %s %s %s > /dev/null 2>&1 &',
+            'nohup %s %s %s >> %s 2>&1 &',
             escapeshellarg($php),
             escapeshellarg($script),
-            escapeshellarg($jobPath)
+            escapeshellarg($jobPath),
+            escapeshellarg($logDir . '/worker-errors.log')
         );
         $process = proc_open(
             $command,
