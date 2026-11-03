@@ -161,6 +161,7 @@ return [
             $setupComposer,
             $runComposerPhp85,
             $runArtisan,
+            "$npm run build",
         ]
     ]
 ];
