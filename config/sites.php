@@ -44,6 +44,8 @@ $migrate = "$php bin/cake.php migrations migrate";
 $npm = '/opt/cpanel/ea-nodejs22/bin/npm';
 $updateReactApp = "$npm install && $npm run webpack -- --env mode=production";
 
+$runArtisan = "php artisan migrate --force && php artisan test";
+
 /**
  * Returns a command that runs in a subdirectory of the site and is skipped if nothing in that directory has changed
  * since it last succeeded
@@ -147,4 +149,19 @@ return [
             $cake5CacheClear,
         ],
     ],
+
+    'First_Thursday' => [
+        'prod' => [
+            'dir' => 'first_thursday',
+            'php' => 8, // 8.5     
+        ],
+        'commands' => [
+            'git pull',
+            'git status',
+            $setupComposer,
+            $runComposerPhp85,
+            $runArtisan,
+            $updateReactApp,
+        ]
+    ]
 ];
