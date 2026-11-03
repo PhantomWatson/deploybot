@@ -161,7 +161,6 @@ return [
             $setupComposer,
             $runComposerPhp85,
             $runArtisan,
-            $updateReactApp,
         ]
     ]
 ];
