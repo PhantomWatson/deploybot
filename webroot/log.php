@@ -6,7 +6,7 @@ if (isset($_GET['site'])) {
     $siteName = $_GET['site'];
     $path = $appDir . '/logs/' . $siteName . '.html';
     if (file_exists($path)) {
-        echo include $path;
+        include $path;
     } else {
         echo 'Log file not found';
     }
