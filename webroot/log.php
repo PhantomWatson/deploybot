@@ -15,4 +15,3 @@ if (isset($_GET['site'])) {
     echo 'No site name provided';
 }
 $content = ob_get_clean();
-include $appDir . '/src/View/layout.php.template';
