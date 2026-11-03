@@ -159,9 +159,10 @@ return [
             'git pull',
             'git status',
             $setupComposer,
-            $runComposerPhp85,
-            $runArtisan,
-            "$npm run build",
+            "$php $composer self-update",
+            $build('src', "$php $composer install --no-dev"),
+            $build('src', $runArtisan),
+            $build('src', "$npm run build"),
         ]
     ]
 ];
