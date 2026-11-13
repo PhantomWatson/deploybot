@@ -39,7 +39,7 @@ $runComposerPhp82 = "$php82 $composer self-update; $php82 $composer install --no
 $runComposerPhp85 = "$php $composer self-update; $php $composer install --no-dev";
 
 $cake4CacheClear = "$php bin/cake.php schema_cache build --connection default";
-$cake5CacheClear = $cake4CacheClear;
+$cake5CacheClear = "bin/cake cache clear_all && bin/cake schema_cache clear";
 $migrate = "$php bin/cake.php migrations migrate";
 $npm = '/opt/cpanel/ea-nodejs22/bin/npm';
 $updateReactApp = "$npm install && $npm run webpack -- --env mode=production";
@@ -89,7 +89,7 @@ return [
             $setupComposer,
             $runComposerPhp85,
             $migrate,
-            $cake4CacheClear,
+            $cake5CacheClear,
             $build('config/webpack', "$npm install"),
             $build('webroot/vote-app', $updateReactApp, ['config/webpack']),
             $build('webroot/image-uploader', $updateReactApp, ['config/webpack']),
