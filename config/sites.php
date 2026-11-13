@@ -44,7 +44,8 @@ $migrate = "$php bin/cake.php migrations migrate";
 $npm = '/opt/cpanel/ea-nodejs22/bin/npm';
 $updateReactApp = "$npm install && $npm run webpack -- --env mode=production";
 
-$runArtisan = "php artisan migrate --force && php artisan test";
+$runArtisan = "php artisan migrate --force";
+$refreshArtisanCache = "php artisan optimize:clear && php artisan optimize";
 
 /**
  * Returns a command that runs in a subdirectory of the site and is skipped if nothing in that directory has changed
@@ -162,6 +163,7 @@ return [
             "$php $composer self-update",
             $build('src', "$php $composer install --no-dev"),
             $build('src', $runArtisan),
+            $build('src', $refreshArtisanCache),
             $build('src', "$npm run build"),
         ]
     ]
