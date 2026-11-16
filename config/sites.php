@@ -42,7 +42,7 @@ $cake4CacheClear = "$php bin/cake.php schema_cache build --connection default";
 $cake5CacheClear = "bin/cake cache clear_all && bin/cake schema_cache clear";
 $migrate = "$php bin/cake.php migrations migrate";
 $npm = '/opt/cpanel/ea-nodejs22/bin/npm';
-$updateReactApp = "$npm install && $npm run webpack -- --env mode=production";
+$updateReactApp = "$npm ci && $npm run webpack -- --env mode=production";
 
 $runArtisan = "php artisan migrate --force";
 $refreshArtisanCache = "php artisan optimize:clear && php artisan optimize";
@@ -91,12 +91,12 @@ return [
             $runComposerPhp85,
             $migrate,
             $cake5CacheClear,
-            $build('config/webpack', "$npm install"),
+            $build('config/webpack', "$npm ci"),
             $build('webroot/vote-app', $updateReactApp, ['config/webpack']),
             $build('webroot/image-uploader', $updateReactApp, ['config/webpack']),
-            $build('webroot/rich-text-editor', "$npm install && $npm run build", ['config/webpack']),
-            $build('webroot/transaction-form', "$npm install && $npm run build", ['config/webpack']),
-            $build('webroot/repayment-form', "$npm install && $npm run build", ['config/webpack']),
+            $build('webroot/rich-text-editor', "$npm ci && $npm run build", ['config/webpack']),
+            $build('webroot/transaction-form', "$npm ci && $npm run build", ['config/webpack']),
+            $build('webroot/repayment-form', "$npm ci && $npm run build", ['config/webpack']),
         ],
     ],
     'muncie-events-api' => [
@@ -129,7 +129,7 @@ return [
             $runComposerPhp82,
             $migrate,
             $cake4CacheClear,
-            $build('webroot/menu-builder', "$npm install && $npm run build"),
+            $build('webroot/menu-builder', "$npm ci && $npm run build"),
         ],
     ],
     'ether' => [
